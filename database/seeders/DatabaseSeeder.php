@@ -2,11 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\Role;
-use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -17,16 +14,12 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Create all roles
         $this->call(RoleSeeder::class);
 
-        $adminRole = Role::where('slug', 'admin')->first();
-
-        $user = User::create([
-            'name' => 'Admin System',
-            'email' => 'admin@system.com',
-            'password' => Hash::make('password'),
-        ]);
-
-        $user->roles()->attach($adminRole->id);
+        // Create users for each role
+        $this->call(AdminSeeder::class);
+        $this->call(KelasSeeder::class);
+        $this->call(JadwalSeeder::class);
     }
 }

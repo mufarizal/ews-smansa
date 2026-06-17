@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Role;
+use App\Models\User;
 use App\Http\Requests\ProfileUpdateRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -47,6 +49,25 @@ class ProfileController extends Controller
         ]);
 
         $user = $request->user();
+
+        // 🔒 PREVENT: Cannot delete if only admin left
+        $roleIds = $user->roles->pluck('id')->toArray();
+        if (!empty($roleIds)) {
+            $adminRoleId = Role::where('slug', 'admin')->value('id');
+
+            if (in_array($adminRoleId, $roleIds)) {
+                $adminCount = User::whereHas('roles', function ($query) use ($adminRoleId) {
+                    $query->where('roles.id', $adminRoleId);
+                })->count();
+
+                if ($adminCount <= 1) {
+                    return Redirect::route('profile.edit')
+                        ->withBag('userDeletion', [
+                            'password' => 'Tidak bisa menghapus akun admin terakhir. Pastikan ada admin lain terlebih dahulu.',
+                        ]);
+                }
+            }
+        }
 
         Auth::logout();
 

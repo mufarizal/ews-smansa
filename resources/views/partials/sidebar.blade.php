@@ -49,6 +49,7 @@
                 'wali_kelas' => ['label' => 'Wali Kelas', 'class' => 'bg-emerald-400 text-emerald-950'],
                 'guru_piket' => ['label' => 'Guru Piket', 'class' => 'bg-orange-400 text-orange-950'],
                 'siswa' => ['label' => 'Siswa', 'class' => 'bg-rose-400 text-rose-950'],
+                'guru_bk' => ['label' => 'Guru BK', 'class' => 'bg-pink-400 text-pink-950'],
             ];
             $activeRoleKey =
                 session('active_role') ??
@@ -125,14 +126,9 @@
                             'route' => route('admin.dashboard'),
                         ],
                         [
-                            'icon' => 'users',
+                            'icon' => 'user-cog',
                             'label' => 'Manajemen User',
                             'route' => route('admin.users.index'),
-                        ],
-                        [
-                            'icon' => 'list-tree',
-                            'label' => 'Manajemen Kelas',
-                            'route' => route('admin.kelas.index'),
                         ],
                     ],
                 ])
@@ -147,6 +143,47 @@
                             'label' => 'Dashboard',
                             'route' => route('kurikulum.dashboard'),
                         ],
+                
+                        // ── Data Master ──────────────────────────────
+                        [
+                            'icon' => 'calendar',
+                            'label' => 'Manajemen Semester',
+                            'route' => route('kurikulum.semesters.index'),
+                        ],
+                        [
+                            'icon' => 'list-tree',
+                            'label' => 'Manajemen Kelas',
+                            'route' => route('kurikulum.kelas.index'),
+                        ],
+                        [
+                            'icon' => 'books',
+                            'label' => 'Mata Pelajaran',
+                            'route' => route('kurikulum.mapel.index'),
+                        ],
+                
+                        // ── SDM ──────────────────────────────────────
+                        [
+                            'icon' => 'users',
+                            'label' => 'Manajemen Siswa',
+                            'route' => route('kurikulum.siswa.index'),
+                        ],
+                        [
+                            'icon' => 'user-pause',
+                            'label' => 'Manajemen Guru',
+                            'route' => route('kurikulum.guru.index'),
+                        ],
+                        [
+                            'icon' => 'git-branch',
+                            'label' => 'Penugasan Guru',
+                            'route' => route('kurikulum.penugasan-guru.mapel.index'),
+                        ],
+                
+                        // ── Operasional ──────────────────────────────
+                        [
+                            'icon' => 'calendar-clock',
+                            'label' => 'Jadwal Pelajaran',
+                            'route' => route('kurikulum.jadwal.index'),
+                        ],
                         [
                             'icon' => 'book',
                             'label' => 'Perangkat Ajar',
@@ -155,7 +192,6 @@
                     ],
                 ])
             @endif
-
             @if ($activeRoleKey === 'guru_mapel')
                 @include('partials.sidebar', [
                     '_group' => 'Guru Mata Pelajaran',
@@ -164,6 +200,16 @@
                             'icon' => 'layout-dashboard',
                             'label' => 'Dashboard',
                             'route' => route('guru_mapel.dashboard'),
+                        ],
+                        [
+                            'icon' => 'school',
+                            'label' => 'Pengajaran Saya',
+                            'route' => route('guru_mapel.pengajaran-saya.index'),
+                        ],
+                        [
+                            'icon' => 'calendar-clock',
+                            'label' => 'Absensi Mapel',
+                            'route' => route('guru_mapel.absensi.index'),
                         ],
                         [
                             'icon' => 'pencil',
@@ -190,8 +236,8 @@
                         ],
                         [
                             'icon' => 'users',
-                            'label' => 'Data Siswa',
-                            'route' => '#',
+                            'label' => 'Kelas Saya',
+                            'route' => route('wali_kelas.kelas-saya.index'),
                         ],
                         [
                             'icon' => 'bell',
@@ -212,9 +258,32 @@
                             'route' => route('guru_piket.dashboard'),
                         ],
                         [
+                            'icon' => 'qrcode',
+                            'label' => 'Barcode Absensi',
+                            'route' => route('guru_piket.qr'),
+                        ],
+                        [
                             'icon' => 'clock',
-                            'label' => 'Jadwal Piket',
-                            'route' => '#',
+                            'label' => 'Riwayat Absensi',
+                            'route' => route('guru_piket.attendance.history'),
+                        ],
+                    ],
+                ])
+            @endif
+
+            @if ($activeRoleKey === 'guru_bk')
+                @include('partials.sidebar', [
+                    '_group' => 'Guru BK',
+                    '_items' => [
+                        [
+                            'icon' => 'layout-dashboard',
+                            'label' => 'Dashboard',
+                            'route' => route('guru_bk.dashboard'),
+                        ],
+                        [
+                            'icon' => 'school',
+                            'label' => 'Pengajaran Saya',
+                            'route' => route('guru_bk.pengajaran-saya.index'),
                         ],
                     ],
                 ])
@@ -230,9 +299,9 @@
                             'route' => route('siswa.dashboard'),
                         ],
                         [
-                            'icon' => 'book',
-                            'label' => 'Lihat Nilai',
-                            'route' => '#',
+                            'icon' => 'scan',
+                            'label' => 'Scan QR Absensi',
+                            'route' => route('siswa.qr.scan'),
                         ],
                         [
                             'icon' => 'clock',

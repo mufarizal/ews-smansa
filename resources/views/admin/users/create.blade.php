@@ -2,19 +2,23 @@
 @section('title', 'Tambah User')
 
 @section('content')
-
-    {{-- Breadcrumb --}}
-    <div class="mb-6">
-        <a href="{{ route('admin.users.index') }}" class="text-sm text-gray-600 hover:text-gray-900 transition">
-            ← Kembali ke Manajemen User
-        </a>
-    </div>
-
     {{-- Header --}}
     <div class="mb-8">
         <h1 class="text-3xl font-bold text-gray-900">Tambah User Baru</h1>
         <p class="mt-2 text-gray-600">Isi data lengkap untuk mendaftarkan pengguna ke sistem</p>
     </div>
+
+    {{-- Validation Errors --}}
+    @if ($errors->any())
+        <div class="mb-6 rounded-lg border border-red-200 bg-red-50 p-4">
+            <h3 class="mb-3 text-sm font-semibold text-red-800">Terjadi kesalahan:</h3>
+            <ul class="space-y-1">
+                @foreach ($errors->all() as $error)
+                    <li class="text-sm text-red-700">• {{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
 
     <form method="POST" action="{{ route('admin.users.store') }}" id="create-form" class="max-w-3xl">
         @csrf

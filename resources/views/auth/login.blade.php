@@ -5,6 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="icon" href=" {{ asset('img/logo.png') }}" type="image/png">
     <title>Login | EWS</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -20,7 +21,7 @@
             class="grid w-full overflow-hidden rounded-3xl border border-lime-200 bg-white shadow-xl shadow-lime-900/10 md:grid-cols-2">
             <aside class="hidden bg-lime-700 p-10 text-white md:flex md:flex-col md:justify-between">
                 <div>
-                    <img src="{{ asset('img/logo.png') }}" alt="Logo EWS" class="h-16 w-16 rounded-lg bg-white/90 p-1">
+                    <img src="{{ asset('img/logo.png') }}" alt="Logo EWS" class="h-16 w-16 rounded-lg  p-1">
                     <h1 class="mt-6 text-3xl font-bold leading-tight">Selamat Datang di EWS</h1>
                     <p class="mt-3 text-sm text-lime-100">Sistem manajemen pendidikan dini yang membantu sekolah
                         berjalan lebih rapi, cepat, dan akurat.</p>

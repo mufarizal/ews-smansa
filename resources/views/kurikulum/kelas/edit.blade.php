@@ -4,8 +4,8 @@
 @section('content')
 
     <div class="mb-6">
-        <a href="{{ route('admin.kelas.index') }}" class="text-sm text-gray-600 transition hover:text-gray-900">
-            ← Kembali ke Manajemen Kelas
+        <a href="{{ route('kurikulum.kelas.index') }}" class="text-sm text-gray-600 transition hover:text-gray-900">
+            Kembali ke Manajemen Kelas
         </a>
     </div>
 
@@ -14,7 +14,7 @@
         <p class="mt-2 text-gray-600">Perbarui data kelas {{ $kelas->nama_kelas }}</p>
     </div>
 
-    <form method="POST" action="{{ route('admin.kelas.update', $kelas->id) }}" class="max-w-3xl">
+    <form method="POST" action="{{ route('kurikulum.kelas.update', $kelas->id) }}" class="max-w-3xl">
         @csrf
         @method('PUT')
 
@@ -38,37 +38,27 @@
                         <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                     @enderror
                 </div>
-
-                <div>
+                
+                <div class="sm:col-span-2">
                     <label class="mb-1.5 block text-sm font-medium text-gray-700">
-                        Jurusan <span class="text-red-500">*</span>
+                        Pilih Data Guru (Wali Kelas) <span class="text-xs text-gray-500">(Opsional)</span>
                     </label>
-                    <input type="text" name="jurusan" value="{{ old('jurusan', $kelas->jurusan) }}" required
-                        @class([
-                            'w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm text-gray-800 placeholder-gray-400 outline-none transition focus:ring-2',
-                            'border-red-500 focus:border-red-500 focus:ring-red-100' => $errors->has(
-                                'jurusan'),
-                            'border-gray-300 focus:border-green-600 focus:ring-green-100' => !$errors->has(
-                                'jurusan'),
-                        ])>
-                    @error('jurusan')
-                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div>
-                    <label class="mb-1.5 block text-sm font-medium text-gray-700">
-                        Angkatan <span class="text-red-500">*</span>
-                    </label>
-                    <input type="number" name="angkatan" value="{{ old('angkatan', $kelas->angkatan) }}" required
-                        min="1900" max="2100" @class([
-                            'w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm text-gray-800 placeholder-gray-400 outline-none transition focus:ring-2',
-                            'border-red-500 focus:border-red-500 focus:ring-red-100' => $errors->has(
-                                'angkatan'),
-                            'border-gray-300 focus:border-green-600 focus:ring-green-100' => !$errors->has(
-                                'angkatan'),
-                        ])>
-                    @error('angkatan')
+                    <select name="wali_kelas_id" @class([
+                        'w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm text-gray-800 outline-none transition focus:ring-2',
+                        'border-red-500 focus:border-red-500 focus:ring-red-100' => $errors->has(
+                            'wali_kelas_id'),
+                        'border-gray-300 focus:border-green-600 focus:ring-green-100' => !$errors->has(
+                            'wali_kelas_id'),
+                    ])>
+                        <option value="">-- Tidak dipilih --</option>
+                        @foreach ($gurus as $guru)
+                            <option value="{{ $guru->id }}"
+                                {{ old('wali_kelas_id', $kelas->wali_kelas_id) == $guru->id ? 'selected' : '' }}>
+                                {{ $guru->nama }} ({{ $guru->nip }})
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('wali_kelas_id')
                         <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                     @enderror
                 </div>
@@ -83,7 +73,7 @@
                 </svg>
                 Update Kelas
             </button>
-            <a href="{{ route('admin.kelas.index') }}"
+            <a href="{{ route('kurikulum.kelas.index') }}"
                 class="rounded-lg border border-gray-300 px-6 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50">
                 Batal
             </a>

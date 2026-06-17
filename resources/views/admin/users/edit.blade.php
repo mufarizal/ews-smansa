@@ -5,8 +5,8 @@
 
     {{-- Breadcrumb --}}
     <div class="mb-6">
-        <a href="{{ route('admin.users.index') }}" class="text-sm text-gray-600 hover:text-gray-900 transition">
-            ← Kembali ke Manajemen User
+        <a href="{{ route('admin.users.index', ['page' => $page ?? 1]) }}" class="text-sm text-gray-600 hover:text-gray-900 transition">
+            Kembali ke Manajemen User
         </a>
     </div>
 
@@ -22,9 +22,22 @@
         </div>
     </div>
 
+    {{-- Validation Errors --}}
+    @if ($errors->any())
+        <div class="mb-6 rounded-lg border border-red-200 bg-red-50 p-4">
+            <h3 class="mb-3 text-sm font-semibold text-red-800">Terjadi kesalahan:</h3>
+            <ul class="space-y-1">
+                @foreach ($errors->all() as $error)
+                    <li class="text-sm text-red-700">• {{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <form method="POST" action="{{ route('admin.users.update', $user->id) }}" class="max-w-3xl">
         @csrf
         @method('PUT')
+        <input type="hidden" name="page" value="{{ $page ?? 1 }}">
 
         {{-- Basic Information Section --}}
         <div class="mb-6 rounded-lg border border-gray-200 bg-white p-6">
@@ -134,37 +147,42 @@
         </div>
 
         {{-- Action Buttons --}}
-        <div class="flex flex-wrap items-center justify-between gap-4">
-            <div class="flex flex-wrap items-center gap-3">
-                <button type="submit"
-                    class="inline-flex items-center gap-2 rounded-lg bg-green-700 px-6 py-2.5 text-sm font-semibold text-white hover:bg-green-800 transition shadow-sm hover:shadow-md">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                    Simpan Perubahan
-                </button>
-                <a href="{{ route('admin.users.index') }}"
-                    class="rounded-lg border border-gray-300 px-6 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
-                    Batal
-                </a>
-            </div>
-
-            <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST"
-                onsubmit="return confirm('Yakin hapus user {{ addslashes($user->name) }}? Tindakan ini tidak bisa dibatalkan.')">
-                @csrf
-                @method('DELETE')
-                <button type="submit"
-                    class="inline-flex items-center gap-2 rounded-lg border border-red-300 px-6 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50 transition">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                    Hapus User
-                </button>
-            </form>
+        <div class="flex flex-wrap items-center gap-3">
+            <button type="submit"
+                class="inline-flex items-center gap-2 rounded-lg bg-green-700 px-6 py-2.5 text-sm font-semibold text-white hover:bg-green-800 transition shadow-sm hover:shadow-md">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                Simpan Perubahan
+            </button>
+            <a href="{{ route('admin.users.index', ['page' => $page ?? 1]) }}"
+                class="rounded-lg border border-gray-300 px-6 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                Batal
+            </a>
         </div>
 
     </form>
+
+    {{-- Delete Form (SEPARATE from update form) --}}
+    <div class="mt-8 pt-8 border-t border-gray-200">
+        <h2 class="mb-4 text-lg font-semibold text-gray-900 text-red-700">Zona Bahaya</h2>
+        <p class="mb-4 text-sm text-gray-600">Hapus akun user ini secara permanen. Tindakan ini tidak dapat dibatalkan.</p>
+
+        <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST"
+            onsubmit="return confirm('Yakin hapus user {{ addslashes($user->name) }}? Tindakan ini tidak bisa dibatalkan.')">
+            @csrf
+            @method('DELETE')
+            <input type="hidden" name="page" value="{{ $page ?? 1 }}">
+            <button type="submit"
+                class="inline-flex items-center gap-2 rounded-lg border border-red-300 px-6 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50 transition">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Hapus User
+            </button>
+        </form>
+    </div>
 
     <script>
         const existingDefault = "{{ old('default_role', $user->default_role) }}";

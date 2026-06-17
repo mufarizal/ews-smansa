@@ -16,6 +16,29 @@
         </div>
     @endif
 
+    @if (session('error'))
+        <div class="mb-6 flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            <svg class="h-5 w-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clip-rule="evenodd" />
+            </svg>
+            {{ session('error') }}
+        </div>
+    @endif
+
+    @if (session('info'))
+        <div
+            class="mb-6 flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+            <svg class="h-5 w-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                    clip-rule="evenodd" />
+            </svg>
+            {{ session('info') }}
+        </div>
+    @endif
+
     {{-- Header Section --}}
     <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -34,77 +57,80 @@
     {{-- Role Statistics Section --}}
     <div class="mb-6">
         <h2 class="mb-4 text-sm font-semibold text-gray-700 uppercase tracking-wide">Statistik Pengguna</h2>
-        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            @php
-                $allRoles = $users->flatMap(fn($u) => $u->roles->pluck('name'))->unique()->sort();
+<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                @php
+                    $allRoles = $roles->pluck('name')->unique()->sort();
 
-                $roleBgColors = [
-                    'admin' => 'bg-yellow-50 border-yellow-200 text-yellow-800',
-                    'kurikulum' => 'bg-violet-50 border-violet-200 text-violet-800',
-                    'guru_mapel' => 'bg-sky-50 border-sky-200 text-sky-800',
-                    'wali_kelas' => 'bg-emerald-50 border-emerald-200 text-emerald-800',
-                    'guru_piket' => 'bg-orange-50 border-orange-200 text-orange-800',
-                    'siswa' => 'bg-rose-50 border-rose-200 text-rose-800',
-                    'bk' => 'bg-red-50 border-red-200 text-red-800',
-                    'kesiswaan' => 'bg-purple-50 border-purple-200 text-purple-800',
-                ];
-            @endphp
+                    $roleBgColors = [
+                        'admin' => 'bg-yellow-50 border-yellow-200 text-yellow-800',
+                        'kurikulum' => 'bg-violet-50 border-violet-200 text-violet-800',
+                        'guru_mapel' => 'bg-sky-50 border-sky-200 text-sky-800',
+                        'wali_kelas' => 'bg-emerald-50 border-emerald-200 text-emerald-800',
+                        'guru_piket' => 'bg-orange-50 border-orange-200 text-orange-800',
+                        'siswa' => 'bg-rose-50 border-rose-200 text-rose-800',
+                        'bk' => 'bg-red-50 border-red-200 text-red-800',
+                        'kesiswaan' => 'bg-purple-50 border-purple-200 text-purple-800',
+                    ];
+                @endphp
 
-            {{-- Total Users Card --}}
-            <div class="rounded-lg border border-gray-200 bg-white p-3.5 hover:shadow-sm transition">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Total User</p>
-                        <p class="mt-1 text-xl font-bold text-gray-900">{{ $users->count() }}</p>
+                {{-- Total Users Card --}}
+                <div class="rounded-lg border border-gray-200 bg-white p-3.5 hover:shadow-sm transition">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Total User</p>
+                            <p class="mt-1 text-xl font-bold text-gray-900">{{ $users->total() }}</p>
+                        </div>
+                        <i></i>
                     </div>
-                    <div class="rounded-md bg-gray-100 px-2 py-1 text-base leading-none">👥</div>
                 </div>
+
+                {{-- Role Cards --}}
+                @foreach ($allRoles as $role)
+                    @php
+                        $count = $roleCounts[$role] ?? 0;
+                        $bgColor = $roleBgColors[$role] ?? 'bg-gray-50 border-gray-200 text-gray-700';
+                    @endphp
+                    <div class="rounded-lg border {{ $bgColor }} p-3.5 hover:shadow-sm transition">
+                        <div>
+                            <p class="text-[11px] font-semibold uppercase tracking-wide">{{ str_replace('_', ' ', $role) }}</p>
+                            <p class="mt-1 text-xl font-bold text-gray-900">{{ $count }}</p>
+                        </div>
+                    </div>
+                @endforeach
             </div>
 
-            {{-- Role Cards --}}
-            @foreach ($allRoles as $role)
-                @php
-                    $count = $users->filter(fn($u) => $u->roles->contains('name', $role))->count();
-                    $bgColor = $roleBgColors[$role] ?? 'bg-gray-50 border-gray-200 text-gray-700';
-                @endphp
-                <div class="rounded-lg border {{ $bgColor }} p-3.5 hover:shadow-sm transition">
-                    <div>
-                        <p class="text-[11px] font-semibold uppercase tracking-wide">{{ str_replace('_', ' ', $role) }}</p>
-                        <p class="mt-1 text-xl font-bold text-gray-900">{{ $count }}</p>
-                    </div>
-                </div>
-            @endforeach
-        </div>
-    </div>
-
     {{-- Search & Filter --}}
-    <div class="mb-6 space-y-3">
-        {{-- Search Input --}}
-        <div class="relative">
+    <form method="GET" action="{{ route('admin.users.index') }}" class="mb-6 grid gap-3 md:grid-cols-3">
+        <div class="relative md:col-span-2">
             <svg class="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" fill="none"
                 stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
-            <input id="search-input" type="text" placeholder="Cari nama atau email pengguna..."
+            <input type="text" name="search" value="{{ $search }}" placeholder="Cari nama atau email pengguna..."
                 class="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100 transition">
         </div>
-
-        {{-- Filter Buttons --}}
-        <div class="flex flex-wrap gap-2">
-            <button onclick="filterRole('')"
-                class="filter-btn active inline-flex items-center rounded-full border border-green-300 bg-green-50 px-3.5 py-1.5 text-xs font-medium text-green-700 transition"
-                data-role="">
-                ✓ Semua
-            </button>
-            @foreach ($allRoles as $role)
-                <button onclick="filterRole('{{ $role }}')"
-                    class="filter-btn inline-flex items-center rounded-full border border-gray-200 bg-white px-3.5 py-1.5 text-xs font-medium text-gray-600 hover:border-gray-300 hover:bg-gray-50 transition"
-                    data-role="{{ $role }}">
-                    {{ str_replace('_', ' ', $role) }}
-                </button>
-            @endforeach
+        <div>
+            <select name="role_id"
+                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700">
+                <option value="">Semua Role</option>
+                @foreach ($roles as $role)
+                    <option value="{{ $role->id }}" {{ (int) $selectedRoleId === (int) $role->id ? 'selected' : '' }}>
+                        {{ $role->name }}
+                    </option>
+                @endforeach
+            </select>
         </div>
-    </div>
+        <div class="flex gap-2 md:col-span-3">
+            <button type="submit"
+                class="inline-flex items-center justify-center rounded-lg bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-800 transition">
+                Terapkan Filter
+            </button>
+            <a href="{{ route('admin.users.index') }}"
+                class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50">
+                Reset
+            </a>
+        </div>
+    </form>
 
     {{-- Users Table --}}
     <div class="rounded-lg border border-gray-200 bg-white overflow-hidden">
@@ -117,17 +143,17 @@
                         <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-700 hidden sm:table-cell">Email
                         </th>
                         <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-700">Role</th>
+                        <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-700">Penugasan Guru</th>
                         <th class="px-5 py-3.5 text-right text-xs font-semibold text-gray-700">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100" id="user-tbody">
                     @forelse ($users as $i => $user)
                         @php
-                            $roleNames = $user->roles->pluck('name')->implode(',');
+                            $displayIndex = ($users->currentPage() - 1) * $users->perPage() + $loop->iteration;
                         @endphp
-                        <tr class="user-row hover:bg-gray-50 transition" data-name="{{ strtolower($user->name) }}"
-                            data-email="{{ strtolower($user->email) }}" data-roles="{{ strtolower($roleNames) }}">
-                            <td class="px-5 py-3.5 text-gray-400 text-xs font-mono">{{ $i + 1 }}</td>
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="px-5 py-3.5 text-gray-400 text-xs font-mono">{{ $displayIndex }}</td>
                             <td class="px-5 py-3.5">
                                 <div class="flex items-center gap-3">
                                     <div
@@ -166,16 +192,52 @@
                                     @endforelse
                                 </div>
                             </td>
+                            <td class="px-5 py-3.5">
+                                @if ($user->guru)
+                                    <div class="flex flex-wrap items-center gap-1.5">
+                                        @if ($user->guru->guruMapelKelas->isNotEmpty())
+                                            <span class="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-800" title="Guru Mapel">
+                                                <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                                </svg>
+                                                Mapel
+                                            </span>
+                                        @endif
+                                        @if ($user->guru->kelasDiampu->isNotEmpty())
+                                            <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-800" title="Wali Kelas">
+                                                <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                                </svg>
+                                                Walas
+                                            </span>
+                                        @endif
+                                        @if ($user->guru->guruBkKelas->isNotEmpty())
+                                            <span class="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-800" title="Guru BK">
+                                                <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                                </svg>
+                                                BK
+                                            </span>
+                                        @endif
+                                        @if ($user->guru->guruPikets->isNotEmpty())
+                                            <span class="inline-flex items-center gap-1 rounded-full bg-orange-50 px-2 py-0.5 text-xs font-medium text-orange-800" title="Guru Piket">
+                                                <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                                </svg>
+                                                Piket
+                                            </span>
+                                        @endif
+                                    </div>
+                                @else
+                                    <span class="text-xs text-gray-400 italic">-</span>
+                                @endif
+                            </td>
                             <td class="px-5 py-3.5 text-right">
                                 <div class="flex items-center justify-end gap-1">
-                                    <a href="{{ route('admin.users.edit', $user->id) }}"
+                                    <a href="{{ route('admin.users.edit', $user->id) }}?page={{ $users->currentPage() }}"
                                         class="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-green-50 hover:border-green-300 hover:text-green-700 transition"
                                         title="Edit">
-                                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2"
-                                            viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                        </svg>
+                                        <i class="ti ti-pencil"></i>
                                         <span class="hidden sm:inline">Edit</span>
                                     </a>
                                     <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST"
@@ -183,83 +245,122 @@
                                         onsubmit="return confirm('Yakin hapus user {{ addslashes($user->name) }}?')">
                                         @csrf
                                         @method('DELETE')
+                                        <input type="hidden" name="page" value="{{ $users->currentPage() }}">
                                         <button type="submit"
                                             class="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 hover:border-red-300 transition"
                                             title="Hapus">
-                                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2"
-                                                viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
+                                            <i class="ti ti-trash"></i>
                                             <span class="hidden sm:inline">Hapus</span>
                                         </button>
                                     </form>
                                 </div>
                             </td>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="5" class="px-5 py-12 text-center">
-                                <div class="text-5xl mb-3">📭</div>
-                                <p class="text-gray-600 font-medium">Belum ada pengguna terdaftar</p>
-                                <p class="text-sm text-gray-500 mt-1">Silahkan tambahkan user baru untuk memulai</p>
-                            </td>
-                        </tr>
-                    @endforelse
+                        @empty
+                            <tr>
+                                <td colspan="6" class="px-5 py-12 text-center">
+                                    <div class="text-5xl mb-3">📭</div>
+                                    <p class="text-gray-600 font-medium">Belum ada pengguna terdaftar</p>
+                                    <p class="text-sm text-gray-500 mt-1">Silahkan tambahkan user baru untuk memulai</p>
+                                </td>
+                            </tr>
+                        @endforelse
                 </tbody>
             </table>
-
-            {{-- No search results state --}}
-            <div id="no-result" class="hidden px-5 py-12 text-center">
-                <div class="text-5xl mb-3">🔍</div>
-                <p class="text-gray-600 font-medium">Tidak ada pengguna yang ditemukan</p>
-                <p class="text-sm text-gray-500 mt-1">Coba ubah pencarian atau filter Anda</p>
-            </div>
         </div>
     </div>
 
-    <script>
-        let activeRole = '';
+    {{-- Pagination --}}
+    @if ($users->hasPages())
+        <div class="flex flex-col items-center justify-between gap-3 border-t border-gray-200 bg-gray-50 px-5 py-3.5 sm:flex-row">
+            <p class="text-xs text-gray-500">
+                Menampilkan
+                <span class="font-semibold text-gray-700">{{ $users->firstItem() }}–{{ $users->lastItem() }}</span>
+                dari
+                <span class="font-semibold text-gray-700">{{ $users->total() }}</span>
+                user
+            </p>
 
-        function filterRole(role) {
-            activeRole = role;
+            <div class="flex items-center gap-1">
+                {{-- Prev --}}
+                @if ($users->onFirstPage())
+                    <span class="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs text-gray-300 cursor-default select-none">
+                        ‹ Prev
+                    </span>
+                @else
+                    <a href="{{ $users->previousPageUrl() }}"
+                        class="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100 transition">
+                        ‹ Prev
+                    </a>
+                @endif
 
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                const isActive = btn.dataset.role === role;
-                btn.classList.toggle('active', isActive);
-                btn.classList.toggle('bg-green-50', isActive);
-                btn.classList.toggle('border-green-300', isActive);
-                btn.classList.toggle('text-green-700', isActive);
-                btn.classList.toggle('bg-white', !isActive);
-                btn.classList.toggle('border-gray-200', !isActive);
-                btn.classList.toggle('text-gray-600', !isActive);
-            });
+                {{-- Page Numbers --}}
+                @php
+                    $currentPage = $users->currentPage();
+                    $lastPage = $users->lastPage();
+                    $start = max(1, $currentPage - 2);
+                    $end = min($lastPage, $currentPage + 2);
+                @endphp
 
-            applyFilters();
-        }
+                @if ($start > 1)
+                    <a href="{{ $users->url(1) }}"
+                        class="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100 transition">
+                        1
+                    </a>
+                    @if ($start > 2)
+                        <span class="px-1 text-xs text-gray-400">…</span>
+                    @endif
+                @endif
 
-        document.getElementById('search-input').addEventListener('input', applyFilters);
+                @foreach ($users->getUrlRange($start, $end) as $page => $url)
+                    @if ($page === $currentPage)
+                        <span
+                            class="rounded-md border border-green-600 bg-green-700 px-3 py-1.5 text-xs font-semibold text-white select-none">
+                            {{ $page }}
+                        </span>
+                    @else
+                        <a href="{{ $url }}"
+                            class="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100 transition">
+                            {{ $page }}
+                        </a>
+                    @endif
+                @endforeach
 
-        function applyFilters() {
-            const query = document.getElementById('search-input').value.toLowerCase().trim();
-            const rows = document.querySelectorAll('.user-row');
-            let visible = 0;
+                @if ($end < $lastPage)
+                    @if ($end < $lastPage - 1)
+                        <span class="px-1 text-xs text-gray-400">…</span>
+                    @endif
+                    <a href="{{ $users->url($lastPage) }}"
+                        class="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100 transition">
+                        {{ $lastPage }}
+                    </a>
+                @endif
 
-            rows.forEach(row => {
-                const matchSearch = !query ||
-                    row.dataset.name.includes(query) ||
-                    row.dataset.email.includes(query);
-
-                const matchRole = !activeRole ||
-                    row.dataset.roles.split(',').some(r => r.trim() === activeRole.toLowerCase());
-
-                const show = matchSearch && matchRole;
-                row.classList.toggle('hidden', !show);
-                if (show) visible++;
-            });
-
-            document.getElementById('no-result').classList.toggle('hidden', visible > 0);
-        }
-    </script>
+                {{-- Next --}}
+                @if ($users->hasMorePages())
+                    <a href="{{ $users->nextPageUrl() }}"
+                        class="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100 transition">
+                        Next ›
+                    </a>
+                @else
+                    <span
+                        class="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs text-gray-300 cursor-default select-none">
+                        Next ›
+                    </span>
+                @endif
+            </div>
+        </div>
+    @else
+        {{-- Tetap tampilkan info total meski hanya 1 halaman --}}
+        @if ($users->total() > 0)
+            <div class="border-t border-gray-200 bg-gray-50 px-5 py-3">
+                <p class="text-xs text-gray-500">
+                    Menampilkan semua
+                    <span class="font-semibold text-gray-700">{{ $users->total() }}</span>
+                    user
+                </p>
+            </div>
+        @endif
+    @endif
 
 @endsection

@@ -7,6 +7,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name', 'EWS SMANSA') }} — @yield('title', 'Dashboard')</title>
     {{-- Tabler Icons Webfont — satu baris, langsung jalan, pakai class "ti ti-nama-icon" --}}
+    <link rel="icon" href=" {{ asset('img/logo.png') }}" type="image/png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>

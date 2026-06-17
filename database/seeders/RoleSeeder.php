@@ -16,6 +16,7 @@ class RoleSeeder extends Seeder
     {
         $roles = [
             ['name' => 'Admin', 'slug' => 'admin'],
+            ['name' => 'Guru BK', 'slug' => 'guru_bk'],
             ['name' => 'Guru Mapel', 'slug' => 'guru_mapel'],
             ['name' => 'Wali Kelas', 'slug' => 'wali_kelas'],
             ['name' => 'Guru Piket', 'slug' => 'guru_piket'],

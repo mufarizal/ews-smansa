@@ -7,6 +7,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 
 class User extends Authenticatable
@@ -56,24 +57,47 @@ class User extends Authenticatable
 
     public function hasRole($role)
     {
+        if (!$this->relationLoaded('roles')) {
+            $this->load('roles');
+        }
+
+        if ($this->roles->isEmpty()) {
+            return false;
+        }
+
         return $this->roles->contains('slug', $role);
     }
 
     public function dashboardRouteName(): ?string
     {
-        $roleRouteMap = [
-            'admin' => 'admin.dashboard',
-            'kurikulum' => 'kurikulum.dashboard',
-            'guru_mapel' => 'guru_mapel.dashboard',
-            'wali_kelas' => 'wali_kelas.dashboard',
-            'guru_piket' => 'guru_piket.dashboard',
-            'siswa' => 'siswa.dashboard',
-        ];
+        $this->load('roles');
 
-        foreach ($roleRouteMap as $role => $routeName) {
-            if ($this->hasRole($role) && Route::has($routeName)) {
-                return $routeName;
-            }
+        if ($this->hasRole('admin')) {
+            return 'admin.dashboard';
+        }
+
+        if ($this->hasRole('kurikulum')) {
+            return 'kurikulum.dashboard';
+        }
+
+        if ($this->hasRole('siswa')) {
+            return 'siswa.dashboard';
+        }
+
+        if ($this->hasRole('guru_mapel')) {
+            return 'guru_mapel.dashboard';
+        }
+
+        if ($this->hasRole('wali_kelas')) {
+            return 'wali_kelas.dashboard';
+        }
+
+        if ($this->hasRole('guru_piket')) {
+            return 'guru_piket.dashboard';
+        }
+
+        if ($this->hasRole('guru_bk')) {
+            return 'guru_bk.dashboard';
         }
 
         return null;
@@ -81,26 +105,62 @@ class User extends Authenticatable
 
     public function dashboardUrl(): string
     {
+        $this->load('roles');
+
         $roleSlugs = $this->roles->pluck('slug');
+
+        if ($roleSlugs->isEmpty()) {
+            Log::warning("User {$this->id} ({$this->email}) has no roles assigned");
+            return '/login';
+        }
+
         $activeRole = session('active_role');
 
-        $role = $roleSlugs->contains($activeRole)
-            ? $activeRole
-            : ($roleSlugs->contains($this->default_role)
-                ? $this->default_role
-                : $roleSlugs->first());
+        if ($activeRole && $roleSlugs->contains($activeRole)) {
+            $role = $activeRole;
+        } elseif (!empty($this->default_role) && $roleSlugs->contains($this->default_role)) {
+            $role = $this->default_role;
+        } else {
+            $role = $roleSlugs->first();
 
-        session(['active_role' => $role]);
+            if (empty($this->default_role) || $this->default_role !== $role) {
+                try {
+                    $this->update(['default_role' => $role]);
+                } catch (\Exception $e) {
+                    Log::error("Failed to update default_role for user {$this->id}", [
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+        }
 
         $map = [
             'admin' => route('admin.dashboard'),
             'kurikulum' => route('kurikulum.dashboard'),
+            'siswa' => route('siswa.dashboard'),
             'guru_mapel' => route('guru_mapel.dashboard'),
             'wali_kelas' => route('wali_kelas.dashboard'),
             'guru_piket' => route('guru_piket.dashboard'),
-            'siswa' => route('siswa.dashboard'),
+            'guru_bk' => route('guru_bk.dashboard'),
         ];
 
-        return $map[$role] ?? '/login';
+        if (!$role || !isset($map[$role])) {
+            Log::warning("User {$this->id} ({$this->email}) has invalid role: {$role}");
+            return '/login';
+        }
+
+        session(['active_role' => $role]);
+
+        return $map[$role];
+    }
+
+    public function guru()
+    {
+        return $this->hasOne(Guru::class);
+    }
+
+    public function siswa()
+    {
+        return $this->hasOne(Siswa::class);
     }
 }
