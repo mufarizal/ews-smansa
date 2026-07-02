@@ -14,6 +14,7 @@ class SemesterController extends Controller
     public function index()
     {
         $semesters = Semester::orderBy('tanggal_mulai', 'desc')->get();
+
         return view('kurikulum.semesters.index', compact('semesters'));
     }
 
@@ -35,7 +36,7 @@ class SemesterController extends Controller
             'tanggal_mulai' => 'required|date',
             'tanggal_selesai' => 'required|date|after:tanggal_mulai',
             'is_active' => 'boolean',
-            'keterangan' => 'nullable'
+            'keterangan' => 'nullable',
         ]);
 
         $data['is_active'] = $request->boolean('is_active');
@@ -76,7 +77,7 @@ class SemesterController extends Controller
 
         if ($data['is_active']) {
             Semester::query()->update([
-                'is_active' => false
+                'is_active' => false,
             ]);
         }
 
@@ -94,6 +95,7 @@ class SemesterController extends Controller
             return back()->with('error', 'Semester aktif tidak dapat dihapus.');
         }
         $semester->delete();
+
         return redirect()->route('kurikulum.semesters.index')->with('success', 'Semester berhasil dihapus.');
     }
 }

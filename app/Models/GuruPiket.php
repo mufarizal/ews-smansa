@@ -34,7 +34,7 @@ class GuruPiket extends Model
      */
     public function scopeActiveSemester($query)
     {
-        return $query->whereHas('semester', fn($q) => $q->where('is_active', true));
+        return $query->whereHas('semester', fn ($q) => $q->where('is_active', true));
     }
 
     /**

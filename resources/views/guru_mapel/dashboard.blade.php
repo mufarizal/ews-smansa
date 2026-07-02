@@ -14,7 +14,7 @@
 
             <div class="mt-6 flex flex-wrap gap-3">
                 <a href="{{ route('guru_mapel.absensi.index') }}"
-                    class="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800">
+                    class="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800">
                     Buka Absensi Mapel
                 </a>
             </div>

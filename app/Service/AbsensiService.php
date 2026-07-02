@@ -2,12 +2,11 @@
 
 namespace App\Service;
 
+use App\Helpers\LocationHelper;
 use App\Models\Absensi;
 use App\Models\QRSession;
-use App\Helpers\LocationHelper;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class AbsensiService
@@ -23,7 +22,7 @@ class AbsensiService
         $userId = Auth::user()?->id ?? 'anonymous';
 
         // Generate hash dari multiple factors untuk unique device ID
-        $fingerprint = hash('sha256', $ua . $screenInfo . $userId);
+        $fingerprint = hash('sha256', $ua.$screenInfo.$userId);
 
         return substr($fingerprint, 0, 16);
     }
@@ -34,13 +33,13 @@ class AbsensiService
     private function validateGPS($latitude, $longitude, $accuracy)
     {
         // GPS fields wajib ada
-        if (!$latitude || !$longitude) {
+        if (! $latitude || ! $longitude) {
             throw new \Exception('GPS tidak tersedia. Pastikan lokasi sudah di-izinkan dan akurat.');
         }
 
         // Accuracy should be reasonable (< 30m typical untuk indoor/outdoor)
         if ($accuracy > 100) {
-            throw new \Exception('GPS accuracy rendah (' . round($accuracy) . 'm). Pastikan di lokasi terbuka.');
+            throw new \Exception('GPS accuracy rendah ('.round($accuracy).'m). Pastikan di lokasi terbuka.');
         }
 
         return true;
@@ -50,10 +49,10 @@ class AbsensiService
      * Handle absensi harian dengan tipe masuk/pulang:
      * tipe 'masuk': Check-in dengan validation jam_batas (threshold) dan jam_maksimal (hard deadline)
      * tipe 'pulang': Check-out dengan validation jam_batas (earliest scan time)
-     * 
+     *
      * Kedua tipe wajib dengan distance validation
      */
-    public function handleHarian($siswa, $tipe, $latitude = null, $longitude = null, $accuracy = null, $deviceId = null, QRSession $qrSession = null)
+    public function handleHarian($siswa, $tipe, $latitude = null, $longitude = null, $accuracy = null, $deviceId = null, ?QRSession $qrSession = null)
     {
         $today = now()->toDateString();
         $now = now();
@@ -64,19 +63,19 @@ class AbsensiService
         $this->validateGPS($latitude, $longitude, $accuracy);
 
         // Validate device_id
-        if (!$deviceId) {
+        if (! $deviceId) {
             throw new \Exception('Device ID tidak valid.');
         }
 
         // Validate tipe parameter
-        if (!in_array($tipe, ['masuk', 'pulang'])) {
+        if (! in_array($tipe, ['masuk', 'pulang'])) {
             throw new \Exception('Tipe absensi tidak valid. Gunakan masuk atau pulang.');
         }
 
         // ========================================
         // GET QR SESSION dengan tipe matching
         // ========================================
-        if (!$qrSession) {
+        if (! $qrSession) {
             $qrSession = QRSession::where('tanggal', $today)
                 ->where('sudah_ditutup', false)
                 ->where('tipe', $tipe)
@@ -84,7 +83,7 @@ class AbsensiService
                 ->first();
         }
 
-        if (!$qrSession) {
+        if (! $qrSession) {
             throw new \Exception("Belum ada QR session tipe '$tipe' untuk hari ini. Minta guru piket untuk generate QR.");
         }
 
@@ -96,7 +95,7 @@ class AbsensiService
         $maxDistance = $schoolConfig['max_distance_meter'] ?? 500;
 
         if ($distanceMeters > $maxDistance) {
-            throw new \Exception('Anda terlalu jauh dari sekolah (' . LocationHelper::formatDistance($distanceMeters) . '). Minimal harus dalam ' . LocationHelper::formatDistance($maxDistance) . ' dari sekolah.');
+            throw new \Exception('Anda terlalu jauh dari sekolah ('.LocationHelper::formatDistance($distanceMeters).'). Minimal harus dalam '.LocationHelper::formatDistance($maxDistance).' dari sekolah.');
         }
 
         // ========================================
@@ -126,7 +125,7 @@ class AbsensiService
 
             // Check: Sudah lewat hard deadline (jam_maksimal)?
             if ($now->gt($jamMaksimal)) {
-                throw new \Exception('Sudah melewati jam maksimal absensi masuk (' . $jamMaksimal->format('H:i:s') . '). Tidak bisa absen masuk lagi.');
+                throw new \Exception('Sudah melewati jam maksimal absensi masuk ('.$jamMaksimal->format('H:i:s').'). Tidak bisa absen masuk lagi.');
             }
 
             // Determine status: hadir atau terlambat
@@ -185,7 +184,7 @@ class AbsensiService
 
             return [
                 'status' => 'checkin',
-                'message' => 'Check-in berhasil! Waktu masuk: ' . $now->format('H:i:s') . ' (' . $status . ')',
+                'message' => 'Check-in berhasil! Waktu masuk: '.$now->format('H:i:s').' ('.$status.')',
                 'jam_masuk' => $now->format('H:i:s'),
                 'attendance_status' => $status,
                 'terlambat_menit' => $terlambatMenit,
@@ -198,12 +197,12 @@ class AbsensiService
         // ========================================
         if ($tipe === 'pulang') {
             // Harus ada absensi masuk terlebih dahulu
-            if (!$existingAbsensi) {
+            if (! $existingAbsensi) {
                 throw new \Exception('Anda belum check-in hari ini. Harus check-in sebelum check-out.');
             }
 
             // Jika jam_masuk belum terisi = error (tidak valid state)
-            if (!$existingAbsensi->jam_masuk) {
+            if (! $existingAbsensi->jam_masuk) {
                 throw new \Exception('Status absensi tidak valid. Hubungi guru piket.');
             }
 
@@ -217,7 +216,7 @@ class AbsensiService
 
             // Check: Masih terlalu pagi untuk scan pulang?
             if ($now->lt($jamBatas)) {
-                throw new \Exception('Belum waktunya checkout. Checkout bisa dimulai jam ' . $jamBatas->format('H:i:s') . '.');
+                throw new \Exception('Belum waktunya checkout. Checkout bisa dimulai jam '.$jamBatas->format('H:i:s').'.');
             }
 
             // Update dengan jam_pulang
@@ -242,7 +241,7 @@ class AbsensiService
 
             return [
                 'status' => 'checkout',
-                'message' => 'Check-out berhasil! Waktu pulang: ' . $now->format('H:i:s'),
+                'message' => 'Check-out berhasil! Waktu pulang: '.$now->format('H:i:s'),
                 'jam_pulang' => $now->format('H:i:s'),
                 'distance' => LocationHelper::formatDistance($distanceMeters),
             ];
@@ -259,7 +258,7 @@ class AbsensiService
 
         $this->validateGPS($latitude, $longitude, $accuracy);
 
-        if (!$deviceId) {
+        if (! $deviceId) {
             throw new \Exception('Device ID tidak valid.');
         }
 
@@ -269,7 +268,7 @@ class AbsensiService
             throw new \Exception('QR session bukan untuk absensi mapel.');
         }
 
-        if (!$qrSession->jadwal_id || !$qrSession->kelas_id || !$qrSession->mapel_id) {
+        if (! $qrSession->jadwal_id || ! $qrSession->kelas_id || ! $qrSession->mapel_id) {
             throw new \Exception('QR mapel belum memiliki konteks jadwal yang lengkap.');
         }
 
@@ -286,7 +285,7 @@ class AbsensiService
         $maxDistance = $schoolConfig['max_distance_meter'] ?? 500;
 
         if ($distanceMeters > $maxDistance) {
-            throw new \Exception('Anda terlalu jauh dari sekolah (' . LocationHelper::formatDistance($distanceMeters) . '). Minimal harus dalam ' . LocationHelper::formatDistance($maxDistance) . ' dari sekolah.');
+            throw new \Exception('Anda terlalu jauh dari sekolah ('.LocationHelper::formatDistance($distanceMeters).'). Minimal harus dalam '.LocationHelper::formatDistance($maxDistance).' dari sekolah.');
         }
 
         $existingAbsensi = Absensi::where('siswa_id', $siswa->id)
@@ -330,7 +329,7 @@ class AbsensiService
 
         return [
             'status' => 'mapel',
-            'message' => 'Absensi mapel berhasil! Waktu tercatat: ' . $now->format('H:i:s'),
+            'message' => 'Absensi mapel berhasil! Waktu tercatat: '.$now->format('H:i:s'),
             'jam_masuk' => $now->format('H:i:s'),
             'distance' => LocationHelper::formatDistance($distanceMeters),
         ];

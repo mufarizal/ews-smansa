@@ -3,17 +3,20 @@
 namespace App\Exports;
 
 use App\Models\Absensi;
+use Carbon\Carbon;
 use Maatwebsite\Excel\Concerns\FromQuery;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
-use Carbon\Carbon;
 
-class AttendanceReportExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSize
+class AttendanceReportExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMapping
 {
     public $qrSessionId;
+
     public $status;
+
     public $kelasId;
+
     public $search;
 
     public function __construct($qrSessionId = null, $status = null, $kelasId = null, $search = null)
@@ -45,8 +48,8 @@ class AttendanceReportExport implements FromQuery, WithHeadings, WithMapping, Sh
 
         if ($this->search) {
             $query->whereHas('siswa', function ($subQuery) {
-                $subQuery->where('nama', 'like', '%' . $this->search . '%')
-                    ->orWhere('nis', 'like', '%' . $this->search . '%');
+                $subQuery->where('nama', 'like', '%'.$this->search.'%')
+                    ->orWhere('nis', 'like', '%'.$this->search.'%');
             });
         }
 

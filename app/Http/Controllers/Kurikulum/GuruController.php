@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers\Kurikulum;
 
+use App\Exports\GuruTemplateExport;
 use App\Http\Controllers\Controller;
+use App\Imports\GuruImport;
 use App\Models\Guru;
 use App\Models\Kelas;
+use App\Models\Semester;
 use App\Models\User;
-use App\Imports\GuruImport;
-use App\Exports\GuruTemplateExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -16,6 +17,7 @@ use Maatwebsite\Excel\Facades\Excel;
 class GuruController extends Controller
 {
     private const DEFAULT_EMAIL_DOMAIN = 'sma.com';
+
     private const DEFAULT_PASSWORD = 'default$123';
 
     public function index(Request $request)
@@ -23,7 +25,7 @@ class GuruController extends Controller
         $search = trim($request->get('search', ''));
         $filter = $request->get('filter', 'all'); // all|mapel|piket|bk|wali|none
 
-        $activeSemester = \App\Models\Semester::where('is_active', true)->first();
+        $activeSemester = Semester::where('is_active', true)->first();
 
         $gurusQuery = Guru::query()->with([
             'user',
@@ -35,8 +37,8 @@ class GuruController extends Controller
 
         if ($search) {
             $gurusQuery->where(function ($q) use ($search) {
-                $q->whereRaw('LOWER(nama) like ?', ['%' . strtolower($search) . '%'])
-                    ->orWhereRaw('LOWER(nip) like ?', ['%' . strtolower($search) . '%']);
+                $q->whereRaw('LOWER(nama) like ?', ['%'.strtolower($search).'%'])
+                    ->orWhereRaw('LOWER(nip) like ?', ['%'.strtolower($search).'%']);
             });
         }
 
@@ -45,11 +47,11 @@ class GuruController extends Controller
             'mapel' => $gurusQuery->whereHas('guruMapelKelas'),
             'piket' => $gurusQuery->whereHas('guruPikets'),
             'bk' => $gurusQuery->whereHas('guruBkKelas'),
-            'wali' => $gurusQuery->whereIn('id', \App\Models\Kelas::whereNotNull('wali_kelas_id')->pluck('wali_kelas_id')),
+            'wali' => $gurusQuery->whereIn('id', Kelas::whereNotNull('wali_kelas_id')->pluck('wali_kelas_id')),
             'none' => $gurusQuery->whereDoesntHave('guruMapelKelas')
                 ->whereDoesntHave('guruPikets')
                 ->whereDoesntHave('guruBkKelas')
-                ->whereNotIn('id', \App\Models\Kelas::whereNotNull('wali_kelas_id')->pluck('wali_kelas_id')),
+                ->whereNotIn('id', Kelas::whereNotNull('wali_kelas_id')->pluck('wali_kelas_id')),
             default => null,
         };
 
@@ -58,11 +60,11 @@ class GuruController extends Controller
         $stats = [
             'total' => Guru::count(),
             'mapel' => Guru::whereHas('guruMapelKelas')->count(),
-            'wali' => \App\Models\Kelas::whereNotNull('wali_kelas_id')->distinct('wali_kelas_id')->count('wali_kelas_id'),
+            'wali' => Kelas::whereNotNull('wali_kelas_id')->distinct('wali_kelas_id')->count('wali_kelas_id'),
             'none' => Guru::whereDoesntHave('guruMapelKelas')
                 ->whereDoesntHave('guruPikets')
                 ->whereDoesntHave('guruBkKelas')
-                ->whereNotIn('id', \App\Models\Kelas::whereNotNull('wali_kelas_id')->pluck('wali_kelas_id'))
+                ->whereNotIn('id', Kelas::whereNotNull('wali_kelas_id')->pluck('wali_kelas_id'))
                 ->count(),
         ];
 
@@ -74,6 +76,7 @@ class GuruController extends Controller
             'activeSemester' => $activeSemester,
         ]);
     }
+
     public function create()
     {
         return view('kurikulum.guru.create');
@@ -135,6 +138,7 @@ class GuruController extends Controller
     public function edit(Guru $guru)
     {
         $page = request()->get('page', 1);
+
         return view('kurikulum.guru.edit', compact('guru', 'page'));
     }
 
@@ -145,7 +149,7 @@ class GuruController extends Controller
         ]);
 
         $request->validate([
-            'nip' => 'required|string|max:255|regex:/^[0-9]+$/|unique:gurus,nip,' . $guru->id,
+            'nip' => 'required|string|max:255|regex:/^[0-9]+$/|unique:gurus,nip,'.$guru->id,
             'nama' => 'required|string|max:255',
             'no_hp' => 'nullable|string|max:20',
         ]);
@@ -182,6 +186,7 @@ class GuruController extends Controller
         });
 
         $currentPage = $request->get('page', 1);
+
         return redirect()
             ->route('kurikulum.guru.index', ['page' => $currentPage])
             ->with('success', 'Guru Berhasil Diperbarui.');
@@ -204,13 +209,14 @@ class GuruController extends Controller
         });
 
         $currentPage = $request->get('page', 1);
+
         return redirect()->route('kurikulum.guru.index', ['page' => $currentPage])
             ->with('success', 'Guru Berhasil Dihapus.');
     }
 
     private function buildEmailFromNip(string $nip): string
     {
-        return $this->normalizeNip($nip) . '@' . self::DEFAULT_EMAIL_DOMAIN;
+        return $this->normalizeNip($nip).'@'.self::DEFAULT_EMAIL_DOMAIN;
     }
 
     private function normalizeNip(string $nip): string
@@ -234,7 +240,7 @@ class GuruController extends Controller
         ]);
 
         try {
-            $import = new GuruImport();
+            $import = new GuruImport;
             Excel::import($import, $request->file('file'));
 
             $successCount = $import->getSuccessCount();
@@ -251,7 +257,7 @@ class GuruController extends Controller
 
         } catch (\Throwable $e) {
             return back()
-                ->withErrors(['file' => 'Error: ' . $e->getMessage()])
+                ->withErrors(['file' => 'Error: '.$e->getMessage()])
                 ->withInput();
         }
     }
@@ -259,8 +265,8 @@ class GuruController extends Controller
     public function downloadTemplate()
     {
         return Excel::download(
-            new GuruTemplateExport(),
-            'template-import-guru-' . now()->format('Y-m-d-His') . '.xlsx'
+            new GuruTemplateExport,
+            'template-import-guru-'.now()->format('Y-m-d-His').'.xlsx'
         );
     }
 }

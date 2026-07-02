@@ -25,7 +25,7 @@
             <p class="mt-1 text-sm text-gray-600">Kelola daftar semester akademik</p>
         </div>
         <a href="{{ route('kurikulum.semesters.create') }}"
-            class="inline-flex items-center justify-center rounded-lg bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-800">
+            class="inline-flex items-center justify-center rounded-lg bg-green-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-green-800">
             + Tambah Semester
         </a>
     </div>
@@ -37,7 +37,7 @@
         </div>
         <div class="flex gap-2 md:col-span-2">
             <button type="submit"
-                class="inline-flex items-center justify-center rounded-lg bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-800">
+                class="inline-flex items-center justify-center rounded-lg bg-green-700 px-5 py-2 text-sm font-semibold text-white hover:bg-green-800">
                 Terapkan Filter
             </button>
             <a href="{{ route('kurikulum.semesters.index') }}"

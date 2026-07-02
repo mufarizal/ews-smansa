@@ -58,7 +58,7 @@
 
         <div class="flex items-center gap-4">
             <button type="submit"
-                class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500">
+                class="inline-flex items-center rounded-md bg-green-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-green-800">
                 {{ __('Save') }}
             </button>
 

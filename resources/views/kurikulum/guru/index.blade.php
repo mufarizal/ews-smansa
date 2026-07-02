@@ -35,7 +35,7 @@
                 <i class="ti ti-download text-base"></i> Template
             </a>
             <a href="{{ route('kurikulum.guru.create') }}"
-                class="inline-flex items-center gap-1.5 rounded-lg bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-800">
+                class="inline-flex items-center gap-1.5 rounded-lg bg-green-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-green-800">
                 <i class="ti ti-plus text-base"></i> Tambah Guru
             </a>
         </div>
@@ -118,7 +118,7 @@
         <input type="file" name="file" accept=".xlsx,.xls"
             class="flex-1 text-sm text-gray-600 file:mr-3 file:rounded file:border-0 file:bg-green-50 file:px-3 file:py-1 file:text-xs file:font-medium file:text-green-700">
         <button type="submit"
-            class="rounded-lg bg-green-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-800">
+            class="rounded-lg bg-green-700 px-5 py-2 text-sm font-semibold text-white hover:bg-green-800">
             Upload
         </button>
     </form>

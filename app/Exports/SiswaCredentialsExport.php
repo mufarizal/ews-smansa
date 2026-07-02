@@ -7,11 +7,9 @@ use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 
-class SiswaCredentialsExport implements FromCollection, WithHeadings, ShouldAutoSize
+class SiswaCredentialsExport implements FromCollection, ShouldAutoSize, WithHeadings
 {
-    public function __construct(private readonly Collection $rows)
-    {
-    }
+    public function __construct(private readonly Collection $rows) {}
 
     public function collection(): Collection
     {

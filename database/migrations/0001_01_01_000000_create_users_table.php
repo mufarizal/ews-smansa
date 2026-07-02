@@ -1,9 +1,11 @@
-﻿<?php
+<?php
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
- 
-return new class extends Migration {
+
+return new class extends Migration
+{
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
@@ -16,13 +18,13 @@ return new class extends Migration {
             $table->rememberToken();
             $table->timestamps();
         });
- 
+
         Schema::create('password_reset_tokens', function (Blueprint $table) {
             $table->string('email')->primary();
             $table->string('token');
             $table->timestamp('created_at')->nullable();
         });
- 
+
         Schema::create('sessions', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->foreignId('user_id')->nullable()->index();
@@ -32,7 +34,7 @@ return new class extends Migration {
             $table->integer('last_activity')->index();
         });
     }
- 
+
     public function down(): void
     {
         Schema::dropIfExists('sessions');

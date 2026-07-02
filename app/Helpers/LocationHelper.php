@@ -52,8 +52,9 @@ class LocationHelper
     public static function formatDistance($meters)
     {
         if ($meters < 1000) {
-            return round($meters) . ' m';
+            return round($meters).' m';
         }
-        return round($meters / 1000, 2) . ' km';
+
+        return round($meters / 1000, 2).' km';
     }
 }

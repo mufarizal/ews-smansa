@@ -10,20 +10,18 @@ use Maatwebsite\Excel\Concerns\WithTitle;
 
 class SiswaTemplateExport implements WithMultipleSheets
 {
-    public function __construct(private readonly Collection $kelas)
-    {
-    }
+    public function __construct(private readonly Collection $kelas) {}
 
     public function sheets(): array
     {
         return [
-            new SiswaTemplateDataSheetExport(),
+            new SiswaTemplateDataSheetExport,
             new SiswaTemplateGuideSheetExport($this->kelas),
         ];
     }
 }
 
-class SiswaTemplateDataSheetExport implements FromArray, WithTitle, ShouldAutoSize
+class SiswaTemplateDataSheetExport implements FromArray, ShouldAutoSize, WithTitle
 {
     public function array(): array
     {
@@ -38,11 +36,9 @@ class SiswaTemplateDataSheetExport implements FromArray, WithTitle, ShouldAutoSi
     }
 }
 
-class SiswaTemplateGuideSheetExport implements FromArray, WithTitle, ShouldAutoSize
+class SiswaTemplateGuideSheetExport implements FromArray, ShouldAutoSize, WithTitle
 {
-    public function __construct(private readonly Collection $kelas)
-    {
-    }
+    public function __construct(private readonly Collection $kelas) {}
 
     public function array(): array
     {

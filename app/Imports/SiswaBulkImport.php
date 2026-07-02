@@ -11,6 +11,7 @@ use Maatwebsite\Excel\Concerns\WithHeadingRow;
 class SiswaBulkImport implements ToCollection, WithHeadingRow
 {
     public Collection $rows;
+
     public array $errors = [];
 
     // Cache kelas agar tidak query berulang
@@ -33,15 +34,17 @@ class SiswaBulkImport implements ToCollection, WithHeadingRow
 
             if (empty($kelasId) || empty($nama)) {
                 $skipped++;
+
                 continue;
             }
 
             // Generate NIS otomatis berdasarkan kelas
             $nis = $this->generateNis((int) $kelasId);
 
-            if (!$nis) {
-                $this->errors[] = "Baris " . ($index + 2) . ": kelas_id {$kelasId} tidak ditemukan.";
+            if (! $nis) {
+                $this->errors[] = 'Baris '.($index + 2).": kelas_id {$kelasId} tidak ditemukan.";
                 $skipped++;
+
                 continue;
             }
 
@@ -61,23 +64,24 @@ class SiswaBulkImport implements ToCollection, WithHeadingRow
     private function generateNis(int $kelasId): ?string
     {
         // Cache kelas supaya tidak query terus
-        if (!isset($this->kelasCache[$kelasId])) {
+        if (! isset($this->kelasCache[$kelasId])) {
             $this->kelasCache[$kelasId] = Kelas::find($kelasId);
         }
 
         $kelas = $this->kelasCache[$kelasId];
-        if (!$kelas)
+        if (! $kelas) {
             return null;
+        }
 
         // Ambil kode dari nama_kelas, contoh: "10 A" → "101"
         preg_match('/(\d+)\s*([A-Za-z])/', $kelas->nama_kelas, $m);
         $tingkat = $m[1] ?? '10';
         $nomorHuruf = isset($m[2]) ? (ord(strtoupper($m[2])) - ord('A') + 1) : 1;
-        $kodeKelas = $tingkat . $nomorHuruf;
+        $kodeKelas = $tingkat.$nomorHuruf;
 
         // Hitung absen berikutnya untuk kelas ini
         $absen = Siswa::where('kelas_id', $kelasId)->count() + 1;
 
-        return $kodeKelas . str_pad($absen, 2, '0', STR_PAD_LEFT);
+        return $kodeKelas.str_pad($absen, 2, '0', STR_PAD_LEFT);
     }
 }

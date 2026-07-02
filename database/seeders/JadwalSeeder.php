@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 
 class JadwalSeeder extends Seeder
 {
@@ -283,6 +283,7 @@ class JadwalSeeder extends Seeder
         foreach ($raw as [$mapel_id, $kelas_id, $guru_id]) {
             $map[$kelas_id][$mapel_id] = $guru_id;
         }
+
         return $map;
     }
 
@@ -359,7 +360,6 @@ class JadwalSeeder extends Seeder
      *   C: kelas 10H      (tanpa B.Sunda, tanpa Prakarya, tanpa B.Jepang)
      *   D: kelas 10I-10J  (paling sedikit)
      */
-
     private function getTemplateJadwal(int $kelasId): array
     {
         // Template: list of [hari, jam_mulai, jam_selesai, mapel_id]
@@ -636,7 +636,7 @@ class JadwalSeeder extends Seeder
 
             foreach ($template as [$hari, $jamMulai, $jamSelesai, $mapelId]) {
                 // Cek apakah penugasan ada untuk kelas+mapel ini
-                if (!isset($penugasan[$kelasId][$mapelId])) {
+                if (! isset($penugasan[$kelasId][$mapelId])) {
                     // Skip jika tidak ada guru yang ditugaskan
                     continue;
                 }
@@ -664,7 +664,7 @@ class JadwalSeeder extends Seeder
             DB::table('jadwals')->insert($chunk);
         }
 
-        $this->command->info('✅ Jadwal pelajaran berhasil di-seed: ' . count($jadwals) . ' baris');
+        $this->command->info('✅ Jadwal pelajaran berhasil di-seed: '.count($jadwals).' baris');
 
         // ── 2. Jadwal Kegiatan Jumat ───────────────────────────
         // 4 kegiatan (minggu ke-1 s.d ke-4), jam 07:00–07:30
@@ -693,7 +693,7 @@ class JadwalSeeder extends Seeder
 
         DB::table('jadwal_kegiatans')->insert($kegiatans);
 
-        $this->command->info('✅ Jadwal kegiatan Jumat berhasil di-seed: ' . count($kegiatans) . ' baris');
+        $this->command->info('✅ Jadwal kegiatan Jumat berhasil di-seed: '.count($kegiatans).' baris');
         $this->command->info('');
         $this->command->info('📋 Ringkasan jadwal pelajaran per kelas:');
 

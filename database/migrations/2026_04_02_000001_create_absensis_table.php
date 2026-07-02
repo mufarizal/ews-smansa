@@ -1,9 +1,11 @@
-﻿<?php
+<?php
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
- 
-return new class extends Migration {
+
+return new class extends Migration
+{
     public function up(): void
     {
         Schema::create('absensis', function (Blueprint $table) {
@@ -29,11 +31,11 @@ return new class extends Migration {
             $table->text('catatan_persetujuan')->nullable();
             $table->foreignId('disetujui_oleh')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
- 
+
             $table->unique(['siswa_id', 'tanggal', 'tipe', 'device_id'], 'unique_siswa_hari_device');
         });
     }
- 
+
     public function down(): void
     {
         Schema::dropIfExists('absensis');

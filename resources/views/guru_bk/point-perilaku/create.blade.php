@@ -1,0 +1,82 @@
+@extends('layouts.app')
+
+@section('title', 'Tambah Perilaku')
+
+@section('content')
+<div class="mx-auto max-w-2xl">
+    <div class="mb-6">
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Point Perilaku</p>
+        <h1 class="mt-1.5 text-2xl font-bold text-gray-900">Tambah Perilaku Baru</h1>
+        <p class="mt-1 text-sm text-gray-500">Buat perilaku beserta poin untuk guru mapel mencatat.</p>
+    </div>
+
+    @if ($errors->any())
+        <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <ul class="list-inside list-disc">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    <div class="rounded-xl border border-gray-200 bg-white p-6">
+        <form method="POST" action="{{ route('guru_bk.point-perilaku.store') }}">
+            @csrf
+
+            <div class="mb-4">
+                <label for="nama_perilaku" class="mb-1.5 block text-sm font-medium text-gray-700">Nama Perilaku</label>
+                <input type="text" name="nama_perilaku" id="nama_perilaku" value="{{ old('nama_perilaku') }}"
+                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
+                    placeholder="Contoh: Sopan, Terlambat, dll" required>
+                @error('nama_perilaku')
+                    <p class="mt-1 text-xs text-rose-600">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div class="mb-4">
+                <label for="jenis" class="mb-1.5 block text-sm font-medium text-gray-700">Jenis</label>
+                <select name="jenis" id="jenis"
+                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
+                    required>
+                    <option value="">-- Pilih Jenis --</option>
+                    <option value="positif" {{ old('jenis') == 'positif' ? 'selected' : '' }}>Positif</option>
+                    <option value="negatif" {{ old('jenis') == 'negatif' ? 'selected' : '' }}>Negatif</option>
+                </select>
+                @error('jenis')
+                    <p class="mt-1 text-xs text-rose-600">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div class="mb-4">
+                <label for="poin" class="mb-1.5 block text-sm font-medium text-gray-700">Poin</label>
+                <input type="number" name="poin" id="poin" value="{{ old('poin') }}"
+                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
+                    placeholder="Masukkan nilai poin (positif untuk nilai positif, negatif untuk nilai negatif)" required>
+                @error('poin')
+                    <p class="mt-1 text-xs text-rose-600">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div class="mb-6">
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" name="status_aktif" id="status_aktif" value="1" {{ old('status_aktif', true) ? 'checked' : '' }}
+                        class="rounded border-gray-300 text-green-600 focus:ring-green-500">
+                    <span class="text-sm text-gray-700">Aktif</span>
+                </label>
+            </div>
+
+            <div class="flex items-center justify-end gap-3">
+                <a href="{{ route('guru_bk.point-perilaku.index') }}"
+                    class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    Batal
+                </a>
+                <button type="submit"
+                    class="rounded-lg bg-green-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-800">
+                    Simpan
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+@endsection

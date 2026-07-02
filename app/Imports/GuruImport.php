@@ -13,10 +13,13 @@ use Maatwebsite\Excel\Concerns\WithHeadingRow;
 class GuruImport implements ToCollection, WithHeadingRow
 {
     private const DEFAULT_EMAIL_DOMAIN = 'sma.com';
+
     private const DEFAULT_PASSWORD = 'default$123';
 
     private int $successCount = 0;
+
     private int $failureCount = 0;
+
     private array $failures = [];
 
     public function collection(Collection $rows)
@@ -28,15 +31,17 @@ class GuruImport implements ToCollection, WithHeadingRow
                 $this->validateRow($row, $rowNumber);
 
                 $nip = $this->normalizeNip((string) $row['nip']);
-                $email = $nip . '@' . self::DEFAULT_EMAIL_DOMAIN;
+                $email = $nip.'@'.self::DEFAULT_EMAIL_DOMAIN;
 
                 if (Guru::where('nip', $nip)->exists()) {
                     $this->addFailure($rowNumber, "NIP {$nip} sudah terdaftar");
+
                     continue;
                 }
 
                 if (User::where('email', $email)->exists()) {
                     $this->addFailure($rowNumber, "Email {$email} sudah terdaftar");
+
                     continue;
                 }
 
@@ -86,7 +91,7 @@ class GuruImport implements ToCollection, WithHeadingRow
             throw new \Exception("Baris {$rowNumber}: NIP minimal 6 karakter (dapat: '{$nipClean}')");
         }
 
-        if (!preg_match('/^[0-9]+$/', $nipClean)) {
+        if (! preg_match('/^[0-9]+$/', $nipClean)) {
             throw new \Exception("Baris {$rowNumber}: NIP hanya boleh berisi angka (dapat: '{$nipClean}')");
         }
     }
@@ -121,10 +126,12 @@ class GuruImport implements ToCollection, WithHeadingRow
     {
         return $this->successCount;
     }
+
     public function getFailureCount(): int
     {
         return $this->failureCount;
     }
+
     public function getFailures(): array
     {
         return $this->failures;

@@ -90,7 +90,7 @@
                     Batal
                 </a>
                 <button type="submit"
-                    class="px-4 py-2 text-sm font-medium text-white bg-green-700 rounded-lg hover:bg-green-800">
+                    class="px-5 py-2.5 text-sm font-medium text-white bg-green-700 rounded-lg hover:bg-green-800">
                     Simpan Semester
                 </button>
             </div>

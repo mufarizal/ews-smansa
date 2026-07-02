@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ProfileUpdateRequest;
 use App\Models\Role;
 use App\Models\User;
-use App\Http\Requests\ProfileUpdateRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -52,7 +52,7 @@ class ProfileController extends Controller
 
         // 🔒 PREVENT: Cannot delete if only admin left
         $roleIds = $user->roles->pluck('id')->toArray();
-        if (!empty($roleIds)) {
+        if (! empty($roleIds)) {
             $adminRoleId = Role::where('slug', 'admin')->value('id');
 
             if (in_array($adminRoleId, $roleIds)) {

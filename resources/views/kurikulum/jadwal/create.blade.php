@@ -299,13 +299,16 @@
         </div>
 
         {{-- Tombol --}}
-        <div class="flex justify-between gap-3">
-            <a href="{{ route('kurikulum.jadwal.index', ['type' => $type]) }}"
-                class="rounded-lg border border-gray-300 px-5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                Batal
-            </a>
-            <button type="submit"
-                class="inline-flex items-center gap-1.5 rounded-lg bg-green-700 px-5 py-2 text-sm font-medium text-white hover:bg-green-800">
+<div class="flex justify-between gap-3">
+             <a href="{{ route('kurikulum.jadwal.index', ['type' => $type]) }}"
+                 class="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                 </svg>
+                 Kembali
+             </a>
+             <button type="submit"
+                class="inline-flex items-center gap-1.5 rounded-lg bg-green-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-green-800">
                 <i class="ti ti-check"></i>
                 {{ $type === 'kegiatan' ? 'Simpan Kegiatan' : 'Simpan Jadwal' }}
             </button>

@@ -50,7 +50,7 @@
 
         <div class="flex gap-2 lg:col-span-4">
             <button type="submit"
-                class="inline-flex items-center justify-center rounded-lg bg-green-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-800">
+                class="inline-flex items-center justify-center rounded-lg bg-green-700 px-5 py-2 text-sm font-semibold text-white transition hover:bg-green-800">
                 Terapkan Filter
             </button>
             <a href="{{ route('kurikulum.kelas.index') }}"

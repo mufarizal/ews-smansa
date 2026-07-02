@@ -15,7 +15,7 @@ class PengajaranSayaController extends Controller
     {
         $guru = auth()->user()?->guru;
 
-        if (!$guru) {
+        if (! $guru) {
             return view('guru_mapel.pengajaran_saya.index', [
                 'guru' => null,
                 'mapels' => collect(),
@@ -39,20 +39,20 @@ class PengajaranSayaController extends Controller
         // Assignments with relations
         $assignments = GuruMapelKelas::with(['mapel', 'kelas', 'semester'])
             ->where('guru_id', $guru->id)
-            ->when($selectedSemesterId, fn($q) => $q->where('semester_id', $selectedSemesterId))
+            ->when($selectedSemesterId, fn ($q) => $q->where('semester_id', $selectedSemesterId))
             ->orderByDesc('semester_id')
             ->orderBy('kelas_id')
             ->orderBy('mapel_id')
             ->get();
 
-        $mapels = $assignments->map(fn($a) => $a->mapel)
+        $mapels = $assignments->map(fn ($a) => $a->mapel)
             ->filter()
             ->unique('id')
             ->values();
 
         // Load kelas with siswas (ordered by nama) in one query — no N+1
         $kelasIds = $assignments->pluck('kelas_id')->filter()->unique()->values();
-        $kelasDiajar = Kelas::with(['siswas' => fn($q) => $q->orderBy('nama')])
+        $kelasDiajar = Kelas::with(['siswas' => fn ($q) => $q->orderBy('nama')])
             ->whereIn('id', $kelasIds)
             ->get();
 
@@ -67,7 +67,7 @@ class PengajaranSayaController extends Controller
         // Schedules — paginated, grouped by day for the view
         $jadwals = Jadwal::with(['semester', 'kelas', 'mapel', 'guru'])
             ->where('guru_id', $guru->id)
-            ->when($selectedSemesterId, fn($q) => $q->where('semester_id', $selectedSemesterId))
+            ->when($selectedSemesterId, fn ($q) => $q->where('semester_id', $selectedSemesterId))
             ->orderByRaw("CASE hari
                 WHEN 'Senin'  THEN 1 WHEN 'Selasa' THEN 2 WHEN 'Rabu'   THEN 3
                 WHEN 'Kamis'  THEN 4 WHEN 'Jumat'  THEN 5 WHEN 'Sabtu'  THEN 6
@@ -79,7 +79,7 @@ class PengajaranSayaController extends Controller
         $jadwalHariIni = Jadwal::with(['semester', 'kelas', 'mapel'])
             ->where('guru_id', $guru->id)
             ->where('hari', Jadwal::carbonToHari(now()))
-            ->when($selectedSemesterId, fn($q) => $q->where('semester_id', $selectedSemesterId))
+            ->when($selectedSemesterId, fn ($q) => $q->where('semester_id', $selectedSemesterId))
             ->orderBy('jam_mulai')
             ->get();
 

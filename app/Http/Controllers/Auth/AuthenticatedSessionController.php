@@ -56,13 +56,13 @@ class AuthenticatedSessionController extends Controller
 
         $role = $userRoles->firstWhere('slug', $roleInput)?->slug;
 
-        if (!$role) {
+        if (! $role) {
             $role = $userRoles
-                ->first(fn($item) => strtolower((string) $item->name) === strtolower($roleInput))
-                    ?->slug;
+                ->first(fn ($item) => strtolower((string) $item->name) === strtolower($roleInput))
+                ?->slug;
         }
 
-        if (!$role) {
+        if (! $role) {
             abort(403, 'Role tidak valid.');
         }
 

@@ -7,6 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Jadwal extends Model
 {
+    private const GRACE_MINUTES = 15;
+
+    private const GRACE_SECONDS = self::GRACE_MINUTES * 60;
+
     protected $fillable = [
         'semester_id',
         'kelas_id',
@@ -60,7 +64,7 @@ class Jadwal extends Model
     public function scopeActive($query)
     {
         return $query->where('is_active', true)
-            ->whereHas('semester', fn($q) => $q->where('is_active', true));
+            ->whereHas('semester', fn ($q) => $q->where('is_active', true));
     }
 
     /**
@@ -104,7 +108,7 @@ class Jadwal extends Model
      */
     public function berlakuPadaTanggal(Carbon $date): bool
     {
-        if (!$this->is_active) {
+        if (! $this->is_active) {
             return false;
         }
 
@@ -115,7 +119,7 @@ class Jadwal extends Model
 
         // Cek semester masih aktif dan tanggal dalam range semester
         $semester = $this->semester;
-        if (!$semester || !$semester->is_active) {
+        if (! $semester || ! $semester->is_active) {
             return false;
         }
 
@@ -128,7 +132,7 @@ class Jadwal extends Model
         }
 
         // Cek minggu_ke — null berarti setiap minggu
-        if (!is_null($this->minggu_ke)) {
+        if (! is_null($this->minggu_ke)) {
             return self::getMingguKeDalamBulan($date) === $this->minggu_ke;
         }
 
@@ -142,19 +146,24 @@ class Jadwal extends Model
     {
         $moment ??= Carbon::now();
 
-        if (!$this->berlakuPadaTanggal($moment->copy()->startOfDay())) {
+        if (! $this->berlakuPadaTanggal($moment->copy()->startOfDay())) {
             return false;
         }
 
-        $start = Carbon::parse($moment->toDateString() . ' ' . $this->jam_mulai, config('app.timezone', 'Asia/Jakarta'));
-        $end = Carbon::parse($moment->toDateString() . ' ' . $this->jam_selesai, config('app.timezone', 'Asia/Jakarta'));
+        $start = Carbon::parse($moment->toDateString().' '.$this->jam_mulai, config('app.timezone', 'Asia/Jakarta'));
+        $end = Carbon::parse($moment->toDateString().' '.$this->jam_selesai, config('app.timezone', 'Asia/Jakarta'));
 
         return $moment->betweenIncluded($start, $end);
     }
 
     public function getAttendanceWindowLabel(): string
     {
-        return $this->jam_mulai . ' - ' . $this->jam_selesai;
+        return $this->jam_mulai.' - '.$this->jam_selesai;
+    }
+
+    public function isActiveToday(): bool
+    {
+        return $this->berlakuPadaTanggal(Carbon::today());
     }
 
     /**
@@ -192,6 +201,22 @@ class Jadwal extends Model
             5 => 'Jumat',
             6 => 'Sabtu',
             default => 'Minggu',
+        };
+    }
+
+    /**
+     * Konversi Carbon date ke nama hari bahasa Inggris (untuk kompatibilitas database)
+     */
+    public static function carbonToHariEnglish(Carbon $date): string
+    {
+        return match ($date->dayOfWeekIso) {
+            1 => 'Monday',
+            2 => 'Tuesday',
+            3 => 'Wednesday',
+            4 => 'Thursday',
+            5 => 'Friday',
+            6 => 'Saturday',
+            default => 'Sunday',
         };
     }
 }

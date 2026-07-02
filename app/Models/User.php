@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Route;
 
 class User extends Authenticatable
 {
@@ -57,7 +56,7 @@ class User extends Authenticatable
 
     public function hasRole($role)
     {
-        if (!$this->relationLoaded('roles')) {
+        if (! $this->relationLoaded('roles')) {
             $this->load('roles');
         }
 
@@ -111,6 +110,7 @@ class User extends Authenticatable
 
         if ($roleSlugs->isEmpty()) {
             Log::warning("User {$this->id} ({$this->email}) has no roles assigned");
+
             return '/login';
         }
 
@@ -118,7 +118,7 @@ class User extends Authenticatable
 
         if ($activeRole && $roleSlugs->contains($activeRole)) {
             $role = $activeRole;
-        } elseif (!empty($this->default_role) && $roleSlugs->contains($this->default_role)) {
+        } elseif (! empty($this->default_role) && $roleSlugs->contains($this->default_role)) {
             $role = $this->default_role;
         } else {
             $role = $roleSlugs->first();
@@ -144,8 +144,9 @@ class User extends Authenticatable
             'guru_bk' => route('guru_bk.dashboard'),
         ];
 
-        if (!$role || !isset($map[$role])) {
+        if (! $role || ! isset($map[$role])) {
             Log::warning("User {$this->id} ({$this->email}) has invalid role: {$role}");
+
             return '/login';
         }
 

@@ -72,6 +72,7 @@ class SiswaController extends Controller
     public function create()
     {
         $kelas = Kelas::orderBy('nama_kelas')->get();
+
         return view('kurikulum.siswa.create', compact('kelas'));
     }
 
@@ -122,11 +123,12 @@ class SiswaController extends Controller
         //
     }
 
-public function edit(Siswa $siswa)
+    public function edit(Siswa $siswa)
     {
         $kelas = Kelas::orderBy('nama_kelas')->get();
         $angkatanOptions = $kelas->pluck('angkatan')->unique()->sort()->values();
         $page = request()->get('page', 1);
+
         return view('kurikulum.siswa.edit', compact('siswa', 'kelas', 'angkatanOptions', 'page'));
     }
 
@@ -134,7 +136,7 @@ public function edit(Siswa $siswa)
     {
         $request->validate([
             'kelas_id' => 'required|exists:kelas,id',
-            'nis' => 'required|string|max:255|unique:siswas,nis,' . $siswa->id,
+            'nis' => 'required|string|max:255|unique:siswas,nis,'.$siswa->id,
             'nama' => 'required|string|max:255',
             'alamat' => 'nullable|string',
         ]);
@@ -165,6 +167,7 @@ public function edit(Siswa $siswa)
         });
 
         $currentPage = $request->get('page', 1);
+
         return redirect()->route('kurikulum.siswa.index', ['page' => $currentPage])
             ->with('success', 'Siswa Berhasil Diperbarui.');
     }
@@ -174,6 +177,7 @@ public function edit(Siswa $siswa)
         DB::transaction(function () use ($siswa) {
             if ($siswa->user) {
                 $siswa->user->delete();
+
                 return;
             }
 
@@ -181,6 +185,7 @@ public function edit(Siswa $siswa)
         });
 
         $currentPage = $request->get('page', 1);
+
         return redirect()->route('kurikulum.siswa.index', ['page' => $currentPage])
             ->with('success', 'Siswa Berhasil Dihapus.');
     }
@@ -206,12 +211,12 @@ public function edit(Siswa $siswa)
 
         $suffix = '';
         if ($request->filled('kelas_id')) {
-            $suffix = '-kelas-' . $kelas->first()->id;
+            $suffix = '-kelas-'.$kelas->first()->id;
         }
 
         return Excel::download(
             new SiswaTemplateExport($kelas),
-            'template-import-siswa' . $suffix . '-' . now()->format('Ymd_His') . '.xlsx'
+            'template-import-siswa'.$suffix.'-'.now()->format('Ymd_His').'.xlsx'
         );
     }
 
@@ -222,7 +227,7 @@ public function edit(Siswa $siswa)
         ]);
 
         $roleSiswa = Role::where('slug', self::SISWA_ROLE)->firstOrFail();
-        $importer = new SiswaBulkImport();
+        $importer = new SiswaBulkImport;
 
         Excel::import($importer, $request->file('excel_file'));
 
@@ -254,29 +259,34 @@ public function edit(Siswa $siswa)
 
             if ($nama === '' || $kelasId <= 0) {
                 $skipped[] = "Baris {$line}: kolom wajib (kelas_id, nama) belum lengkap.";
+
                 continue;
             }
 
             $kelas = Kelas::find($kelasId);
-            if (!$kelas) {
+            if (! $kelas) {
                 $skipped[] = "Baris {$line}: kelas_id {$kelasId} tidak ditemukan.";
+
                 continue;
             }
 
             // Jika NIS masih kosong setelah resolve (kelas tidak valid), skip
             if ($nis === '') {
                 $skipped[] = "Baris {$line}: gagal generate NIS, kelas_id {$kelasId} tidak valid.";
+
                 continue;
             }
 
             if (Siswa::where('nis', $nis)->exists()) {
                 $skipped[] = "Baris {$line}: NIS {$nis} sudah terdaftar.";
+
                 continue;
             }
 
             $email = $this->buildEmailFromNis($nis);
             if (User::where('email', $email)->exists()) {
                 $skipped[] = "Baris {$line}: email {$email} sudah dipakai user lain.";
+
                 continue;
             }
 
@@ -324,7 +334,7 @@ public function edit(Siswa $siswa)
         ]);
 
         $message = "Import selesai: {$created} siswa berhasil ditambahkan.";
-        if (!empty($skipped)) {
+        if (! empty($skipped)) {
             $message .= ' Ada beberapa baris yang dilewati.';
         }
 
@@ -343,7 +353,7 @@ public function edit(Siswa $siswa)
         $kelasId = $request->filled('kelas_id') ? (int) $request->kelas_id : null;
         if ($kelasId !== null) {
             $credentials = $credentials
-                ->filter(fn(array $row) => (int) ($row['kelas_id'] ?? 0) === $kelasId)
+                ->filter(fn (array $row) => (int) ($row['kelas_id'] ?? 0) === $kelasId)
                 ->values();
         }
 
@@ -357,7 +367,7 @@ public function edit(Siswa $siswa)
             session()->forget('siswa_generated_credentials');
         } else {
             $remaining = $allCredentials
-                ->reject(fn(array $row) => (int) ($row['kelas_id'] ?? 0) === $kelasId)
+                ->reject(fn (array $row) => (int) ($row['kelas_id'] ?? 0) === $kelasId)
                 ->values();
 
             if ($remaining->isEmpty()) {
@@ -367,11 +377,11 @@ public function edit(Siswa $siswa)
             }
         }
 
-        $fileSuffix = $kelasId !== null ? '-kelas-' . $kelasId : '';
+        $fileSuffix = $kelasId !== null ? '-kelas-'.$kelasId : '';
 
         return Excel::download(
             new SiswaCredentialsExport($credentials),
-            'akun-login-siswa-import' . $fileSuffix . '-' . now()->format('Ymd_His') . '.xlsx'
+            'akun-login-siswa-import'.$fileSuffix.'-'.now()->format('Ymd_His').'.xlsx'
         );
     }
 
@@ -396,7 +406,7 @@ public function edit(Siswa $siswa)
             $targetText = $kelasLabel ? " pada kelas {$kelasLabel}" : '';
 
             return back()->withErrors([
-                'export_credentials' => 'Belum ada data siswa' . $targetText . ' untuk dibuatkan akun login.',
+                'export_credentials' => 'Belum ada data siswa'.$targetText.' untuk dibuatkan akun login.',
             ]);
         }
 
@@ -404,7 +414,7 @@ public function edit(Siswa $siswa)
         $credentials = [];
 
         foreach ($allSiswa as $siswa) {
-            if (!$siswa->user) {
+            if (! $siswa->user) {
                 continue;
             }
 
@@ -434,15 +444,15 @@ public function edit(Siswa $siswa)
             $targetText = $kelasLabel ? " pada kelas {$kelasLabel}" : '';
 
             return back()->withErrors([
-                'export_credentials' => 'Tidak ada akun user siswa' . $targetText . ' yang bisa diproses.',
+                'export_credentials' => 'Tidak ada akun user siswa'.$targetText.' yang bisa diproses.',
             ]);
         }
 
-        $fileSuffix = $kelasId !== null ? '-kelas-' . $kelasId : '-semua';
+        $fileSuffix = $kelasId !== null ? '-kelas-'.$kelasId : '-semua';
 
         return Excel::download(
             new SiswaCredentialsExport(collect($credentials)),
-            'akun-login-siswa' . $fileSuffix . '-' . now()->format('Ymd_His') . '.xlsx'
+            'akun-login-siswa'.$fileSuffix.'-'.now()->format('Ymd_His').'.xlsx'
         );
     }
 
@@ -466,24 +476,25 @@ public function edit(Siswa $siswa)
     private function generateNisFromKelas(int $kelasId): string
     {
         $kelas = Kelas::find($kelasId);
-        if (!$kelas)
+        if (! $kelas) {
             return '';
+        }
 
         // "10 A" → "101", "10 B" → "102", "11 A" → "111", dst
         preg_match('/(\d+)\s*([A-Za-z])/', $kelas->nama_kelas, $m);
         $tingkat = $m[1] ?? '10';
         $nomorHuruf = isset($m[2]) ? (ord(strtoupper($m[2])) - ord('A') + 1) : 1;
-        $kodeKelas = $tingkat . $nomorHuruf;
+        $kodeKelas = $tingkat.$nomorHuruf;
 
         // Nomor absen berikutnya untuk kelas ini
         $absen = Siswa::where('kelas_id', $kelasId)->count() + 1;
 
-        return $kodeKelas . str_pad($absen, 2, '0', STR_PAD_LEFT);
+        return $kodeKelas.str_pad($absen, 2, '0', STR_PAD_LEFT);
     }
 
     private function buildEmailFromNis(string $nis): string
     {
-        return trim($nis) . '@' . self::DEFAULT_EMAIL_DOMAIN;
+        return trim($nis).'@'.self::DEFAULT_EMAIL_DOMAIN;
     }
 
     private function generateReadablePassword(): string

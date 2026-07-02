@@ -117,7 +117,7 @@
                                     Penugasan Mapel per Kelas <span class="text-red-500">*</span>
                                 </label>
                                 <button type="button" id="btn-add-mapel"
-                                    class="rounded-lg border border-green-300 bg-white px-3 py-1.5 text-xs font-semibold text-green-700 hover:bg-green-50">
+                                    class="rounded-lg border border-green-300 bg-white px-4 py-2 text-sm font-semibold text-green-700 hover:bg-green-50">
                                     + Tambah Mapel
                                 </button>
                             </div>
@@ -147,8 +147,8 @@
                                                 </select>
                                             </div>
                                             <button type="button"
-                                                class="btn-remove-mapel-row rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100">
-                                                Hapus
+                                            class="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100">
+                                            Hapus
                                             </button>
                                         </div>
                                         <div>
@@ -182,7 +182,7 @@
                         </div>
 
                         <button type="submit"
-                            class="rounded-lg bg-green-700 px-6 py-2 text-sm font-semibold text-white hover:bg-green-800 disabled:opacity-50">
+                            class="rounded-lg bg-green-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-green-800 disabled:opacity-50">
                             Simpan Penugasan Mapel
                         </button>
                     </form>
@@ -244,7 +244,7 @@
                                                             @csrf
                                                             @method('DELETE')
                                                             <button type="submit"
-                                                                class="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100">
+                                                                class="rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100">
                                                                 Hapus
                                                             </button>
                                                         </form>
@@ -276,7 +276,7 @@
                             </select>
                         </div>
                         <button type="button"
-                            class="btn-remove-mapel-row rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100">
+                            class="btn-remove-mapel-row rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100">
                             Hapus
                         </button>
                     </div>
@@ -351,7 +351,7 @@
                     </div>
 
                     <button type="submit"
-                        class="rounded-lg bg-green-700 px-6 py-2 text-sm font-semibold text-white hover:bg-green-800">
+                        class="rounded-lg bg-green-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-green-800">
                         Simpan Penugasan Piket
                     </button>
                 </form>
@@ -420,7 +420,7 @@
                     </div>
 
                     <button type="submit"
-                        class="rounded-lg bg-green-700 px-6 py-2 text-sm font-semibold text-white hover:bg-green-800">
+                        class="rounded-lg bg-green-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-green-800">
                         Simpan Wali Kelas
                     </button>
                 </form>
@@ -485,7 +485,7 @@
                         </div>
 
                         <button type="submit"
-                            class="rounded-lg bg-green-700 px-6 py-2 text-sm font-semibold text-white hover:bg-green-800">
+                            class="rounded-lg bg-green-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-green-800">
                             Simpan Penugasan Guru BK
                         </button>
                     </form>
@@ -534,7 +534,7 @@
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit"
-                                                        class="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100">
+                                                        class="rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100">
                                                         Hapus
                                                     </button>
                                                 </form>

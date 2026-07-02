@@ -16,7 +16,7 @@ class RoleMiddleware
      */
     public function handle($request, Closure $next, $role)
     {
-        if (!Auth::check()) {
+        if (! Auth::check()) {
             Log::warning('Unauthorized access attempt: User not authenticated', [
                 'ip' => $request->ip(),
                 'url' => $request->url(),
@@ -36,7 +36,7 @@ class RoleMiddleware
             abort(403, "Unauthorized: User does not have the required '{$role}' role. Please contact administrator.");
         }
 
-        if (!$user->hasRole($role)) {
+        if (! $user->hasRole($role)) {
             Log::warning("User {$user->id} ({$user->email}) tried to access '{$role}' but doesn't have permission", [
                 'user_roles' => $user->roles->pluck('slug')->toArray(),
                 'requested_role' => $role,
@@ -48,4 +48,3 @@ class RoleMiddleware
         return $next($request);
     }
 }
-

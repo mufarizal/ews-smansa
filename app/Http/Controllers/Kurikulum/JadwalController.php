@@ -12,6 +12,7 @@ use App\Models\Mapel;
 use App\Models\Semester;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 
 class JadwalController extends Controller
@@ -53,8 +54,8 @@ class JadwalController extends Controller
             $selectedHari = $request->filled('hari') ? (string) $request->hari : null;
 
             $kegiatans = JadwalKegiatan::with('semester')
-                ->when($semesterId, fn($q) => $q->where('semester_id', $semesterId))
-                ->when($selectedHari, fn($q) => $q->where('hari', $selectedHari))
+                ->when($semesterId, fn ($q) => $q->where('semester_id', $semesterId))
+                ->when($selectedHari, fn ($q) => $q->where('hari', $selectedHari))
                 ->orderByRaw("CASE hari
                     WHEN 'Senin'  THEN 1 WHEN 'Selasa' THEN 2 WHEN 'Rabu'   THEN 3
                     WHEN 'Kamis'  THEN 4 WHEN 'Jumat'  THEN 5 WHEN 'Sabtu'  THEN 6
@@ -87,16 +88,16 @@ class JadwalController extends Controller
         $search = trim((string) $request->get('search', ''));
 
         $jadwals = Jadwal::with(['semester', 'kelas', 'guru', 'mapel'])
-            ->when($semesterId, fn($q) => $q->where('semester_id', $semesterId))
-            ->when($selectedKelasId, fn($q) => $q->where('kelas_id', $selectedKelasId))
-            ->when($selectedHari, fn($q) => $q->where('hari', $selectedHari))
-            ->when($selectedMapelId, fn($q) => $q->where('mapel_id', $selectedMapelId))
-            ->when($selectedGuruId, fn($q) => $q->where('guru_id', $selectedGuruId))
+            ->when($semesterId, fn ($q) => $q->where('semester_id', $semesterId))
+            ->when($selectedKelasId, fn ($q) => $q->where('kelas_id', $selectedKelasId))
+            ->when($selectedHari, fn ($q) => $q->where('hari', $selectedHari))
+            ->when($selectedMapelId, fn ($q) => $q->where('mapel_id', $selectedMapelId))
+            ->when($selectedGuruId, fn ($q) => $q->where('guru_id', $selectedGuruId))
             ->when($search !== '', function ($q) use ($search) {
                 $q->where(function ($b) use ($search) {
-                    $b->whereHas('kelas', fn($kq) => $kq->where('nama_kelas', 'like', "%{$search}%"))
-                        ->orWhereHas('mapel', fn($mq) => $mq->where('nama', 'like', "%{$search}%"))
-                        ->orWhereHas('guru', fn($gq) => $gq->where('nama', 'like', "%{$search}%")
+                    $b->whereHas('kelas', fn ($kq) => $kq->where('nama_kelas', 'like', "%{$search}%"))
+                        ->orWhereHas('mapel', fn ($mq) => $mq->where('nama', 'like', "%{$search}%"))
+                        ->orWhereHas('guru', fn ($gq) => $gq->where('nama', 'like', "%{$search}%")
                             ->orWhere('nip', 'like', "%{$search}%"));
                 });
             })
@@ -230,7 +231,7 @@ class JadwalController extends Controller
             'kelas_id' => 'required|exists:kelas,id',
             'guru_id' => 'required|exists:gurus,id',
             'mapel_id' => 'required|exists:mapels,id',
-            'hari' => 'required|string|in:' . implode(',', self::HARI_OPTIONS),
+            'hari' => 'required|string|in:'.implode(',', self::HARI_OPTIONS),
             'jam_mulai' => 'required|date_format:H:i',
             'jam_selesai' => 'required|date_format:H:i|after:jam_mulai',
             'is_active' => 'boolean',
@@ -264,7 +265,7 @@ class JadwalController extends Controller
     {
         $validated = $request->validate([
             'semester_id' => 'required|exists:semesters,id',
-            'hari' => 'required|string|in:' . implode(',', self::HARI_OPTIONS),
+            'hari' => 'required|string|in:'.implode(',', self::HARI_OPTIONS),
             'minggu_ke' => 'required|integer|in:1,2,3,4',
             'nama_kegiatan' => 'required|string|max:100',
             'jam_mulai' => 'required|date_format:H:i',
@@ -301,7 +302,7 @@ class JadwalController extends Controller
             'kelas_id' => 'required|exists:kelas,id',
             'guru_id' => 'required|exists:gurus,id',
             'mapel_id' => 'required|exists:mapels,id',
-            'hari' => 'required|string|in:' . implode(',', self::HARI_OPTIONS),
+            'hari' => 'required|string|in:'.implode(',', self::HARI_OPTIONS),
             'jam_mulai' => 'required|date_format:H:i',
             'jam_selesai' => 'required|date_format:H:i|after:jam_mulai',
             'is_active' => 'boolean',
@@ -336,7 +337,7 @@ class JadwalController extends Controller
     {
         $validated = $request->validate([
             'semester_id' => 'required|exists:semesters,id',
-            'hari' => 'required|string|in:' . implode(',', self::HARI_OPTIONS),
+            'hari' => 'required|string|in:'.implode(',', self::HARI_OPTIONS),
             'minggu_ke' => 'required|integer|in:1,2,3,4',
             'nama_kegiatan' => 'required|string|max:100',
             'jam_mulai' => 'required|date_format:H:i',
@@ -372,12 +373,12 @@ class JadwalController extends Controller
         return Semester::where('is_active', true)->first();
     }
 
-    private function buildGuruAssignments(?int $semesterId): \Illuminate\Support\Collection
+    private function buildGuruAssignments(?int $semesterId): Collection
     {
         return GuruMapelKelas::with('guru:id,nama')
-            ->when($semesterId, fn($q) => $q->where('semester_id', $semesterId))
+            ->when($semesterId, fn ($q) => $q->where('semester_id', $semesterId))
             ->get()
-            ->map(fn(GuruMapelKelas $item) => [
+            ->map(fn (GuruMapelKelas $item) => [
                 'kelas_id' => $item->kelas_id,
                 'mapel_id' => $item->mapel_id,
                 'guru_id' => $item->guru_id,
@@ -394,7 +395,7 @@ class JadwalController extends Controller
             ->where('semester_id', $semesterId)
             ->exists();
 
-        if (!$exists) {
+        if (! $exists) {
             throw ValidationException::withMessages([
                 'guru_id' => 'Guru tidak terdaftar mengajar mapel ini di kelas yang dipilih pada semester tersebut.',
             ]);
@@ -415,7 +416,7 @@ class JadwalController extends Controller
             ->where('hari', $hari)
             ->where('jam_mulai', '<', $jamSelesai)
             ->where('jam_selesai', '>', $jamMulai)
-            ->when($ignoreId, fn($q) => $q->where('id', '!=', $ignoreId));
+            ->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId));
 
         if ((clone $base)->where('kelas_id', $kelasId)->exists()) {
             throw ValidationException::withMessages([
@@ -435,12 +436,12 @@ class JadwalController extends Controller
         $exists = JadwalKegiatan::where('semester_id', $semesterId)
             ->where('hari', $hari)
             ->where('minggu_ke', $mingguKe)
-            ->when($ignoreId, fn($q) => $q->where('id', '!=', $ignoreId))
+            ->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))
             ->exists();
 
         if ($exists) {
             throw ValidationException::withMessages([
-                'minggu_ke' => 'Sudah ada kegiatan pada ' . $hari . ' minggu ke-' . $mingguKe . ' di semester ini.',
+                'minggu_ke' => 'Sudah ada kegiatan pada '.$hari.' minggu ke-'.$mingguKe.' di semester ini.',
             ]);
         }
     }
@@ -453,13 +454,13 @@ class JadwalController extends Controller
             ->orderBy('jam_mulai')
             ->value('jam_mulai');
 
-        if (!$mapelPertama) {
+        if (! $mapelPertama) {
             return;
         }
 
         if ($jamSelesai > $mapelPertama) {
             throw ValidationException::withMessages([
-                'jam_selesai' => 'Jam selesai kegiatan (' . $jamSelesai . ') harus sebelum jam mulai mapel pertama (' . substr((string) $mapelPertama, 0, 5) . ') di hari ' . $hari . '.',
+                'jam_selesai' => 'Jam selesai kegiatan ('.$jamSelesai.') harus sebelum jam mulai mapel pertama ('.substr((string) $mapelPertama, 0, 5).') di hari '.$hari.'.',
             ]);
         }
     }

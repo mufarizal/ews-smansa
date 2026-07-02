@@ -30,7 +30,7 @@
     @endphp
     <div class="mb-5">
         <label for="{{ $dateInput['name'] }}" class="block text-base font-bold text-gray-900 mb-2">
-            📅 {{ $dateInput['label'] }}
+             {{ $dateInput['label'] }}
             @if ($dateInput['required'] ?? false)
                 <span class="text-red-600">*</span>
             @endif
@@ -42,10 +42,10 @@
                 cursor-pointer hover:shadow-md" />
 
         @error($dateInput['name'])
-            <p class="mt-2 text-sm font-semibold text-red-600">⚠️ {{ $message }}</p>
+            <p class="mt-2 text-sm font-semibold text-red-600"> {{ $message }}</p>
         @enderror
         @if (isset($dateInput['help']))
-            <p class="mt-2 text-xs text-gray-600 font-medium">💡 {{ $dateInput['help'] }}</p>
+            <p class="mt-2 text-xs text-gray-600 font-medium"> {{ $dateInput['help'] }}</p>
         @endif
     </div>
 @endif
@@ -91,7 +91,7 @@
     @endphp
     <div class="mb-5">
         <label class="block text-base font-bold text-gray-900 mb-2">
-            ⏰ {{ $timeInput['label'] }}
+             {{ $timeInput['label'] }}
             @if ($timeInput['required'] ?? false)
                 <span class="text-red-600">*</span>
             @endif

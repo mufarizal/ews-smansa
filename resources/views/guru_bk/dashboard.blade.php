@@ -2,8 +2,170 @@
 @section('title', 'Dashboard Guru BK')
 
 @section('content')
-    <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-        <h1 class="text-3xl font-bold text-gray-900">Dashboard Guru BK</h1>
-        <p class="mt-2 text-sm text-gray-600">Role ini sudah disiapkan untuk fitur BK berikutnya.</p>
+    <div class="mx-auto max-w-7xl space-y-6">
+
+        {{-- Page Header --}}
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Guru BK</p>
+                <h1 class="mt-1.5 text-2xl font-bold text-gray-900">Dashboard</h1>
+                <p class="mt-1 text-sm text-gray-500">Ringkasan status Early Warning System untuk kelas yang Anda ampu.</p>
+            </div>
+        </div>
+
+        {{-- Semester Aktif --}}
+        @if ($semester)
+            <div class="flex items-center gap-2.5 rounded-lg border border-blue-100 bg-blue-50 px-4 py-2.5">
+                <span class="h-2 w-2 shrink-0 rounded-full bg-blue-500"></span>
+                <span class="text-sm text-blue-800">
+                    Semester aktif: <strong>{{ $semester->nama }}</strong>
+                    <span class="text-blue-600 text-xs ml-1">
+                        ({{ \Carbon\Carbon::parse($semester->tanggal_mulai)->translatedFormat('d M Y') }}
+                        – {{ \Carbon\Carbon::parse($semester->tanggal_selesai)->translatedFormat('d M Y') }})
+                    </span>
+                </span>
+            </div>
+        @else
+            <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-800">
+                Belum ada semester aktif. Menampilkan data apa adanya.
+            </div>
+        @endif
+
+        {{-- Alert Kesehatan Data --}}
+        @if ($kelasBelumGenerate->isNotEmpty() || $kelasStale->isNotEmpty())
+            <div class="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                <div class="flex items-start gap-3">
+                    <svg class="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                    </svg>
+                    <div class="flex-1">
+                        <p class="text-sm font-semibold text-amber-800">Data SAW perlu diperbarui</p>
+                        <ul class="mt-1.5 space-y-1">
+                            @foreach ($kelasBelumGenerate as $gbk)
+                                <li class="text-xs text-amber-700 flex items-center justify-between">
+                                    <span><span class="font-medium">{{ $gbk->kelas->nama }}</span> — belum pernah di-generate</span>
+                                    <a href="{{ route('guru_bk.monitoring.show', $gbk->kelas_id) }}" class="ml-4 underline hover:text-amber-900 whitespace-nowrap">Buka Monitoring →</a>
+                                </li>
+                            @endforeach
+                            @foreach ($kelasStale as $gbk)
+                                @php $info = $hasilPerKelas[$gbk->kelas_id]; @endphp
+                                <li class="text-xs text-amber-700 flex items-center justify-between">
+                                    <span>
+                                        <span class="font-medium">{{ $gbk->kelas->nama }}</span> — terakhir di-generate
+                                        {{ \Carbon\Carbon::parse($info->last_generated_at)->diffForHumans() }}
+                                    </span>
+                                    <a href="{{ route('guru_bk.monitoring.show', $gbk->kelas_id) }}" class="ml-4 underline hover:text-amber-900 whitespace-nowrap">Buka Monitoring →</a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        {{-- Stat Ringkasan Global --}}
+        @if ($ringkasan['total'] > 0)
+            <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                @php
+                    $total = $ringkasan['total'];
+                    $pct = fn($n) => $total > 0 ? round(($n / $total) * 100) : 0;
+                @endphp
+                <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+                    <p class="text-3xl font-bold text-gray-800">{{ $total }}</p>
+                    <p class="text-sm text-gray-500 mt-0.5">Total Siswa</p>
+                    <p class="text-xs text-gray-400 mt-0.5">{{ $guruBkKelas->count() }} kelas diampu</p>
+                </div>
+                <div class="rounded-xl border border-rose-200 bg-rose-50 p-5 shadow-sm">
+                    <p class="text-3xl font-bold text-rose-600">{{ $ringkasan['binaan'] }}</p>
+                    <p class="text-sm font-medium text-rose-700 mt-0.5">Binaan</p>
+                    <p class="text-xs text-rose-400 mt-0.5">{{ $pct($ringkasan['binaan']) }}% dari total</p>
+                </div>
+                <div class="rounded-xl border border-amber-200 bg-amber-50 p-5 shadow-sm">
+                    <p class="text-3xl font-bold text-amber-600">{{ $ringkasan['perhatian'] }}</p>
+                    <p class="text-sm font-medium text-amber-700 mt-0.5">Perhatian</p>
+                    <p class="text-xs text-amber-400 mt-0.5">{{ $pct($ringkasan['perhatian']) }}% dari total</p>
+                </div>
+                <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm">
+                    <p class="text-3xl font-bold text-emerald-600">{{ $ringkasan['aman'] }}</p>
+                    <p class="text-sm font-medium text-emerald-700 mt-0.5">Aman</p>
+                    <p class="text-xs text-emerald-400 mt-0.5">{{ $pct($ringkasan['aman']) }}% dari total</p>
+                </div>
+            </div>
+        @endif
+
+        {{-- Daftar Kelas --}}
+        <div class="space-y-4">
+            @forelse ($guruBkKelas as $gbk)
+                @php
+                    $perKelas = $ringkasanPerKelas[$gbk->kelas_id] ?? [
+                        'kelas' => $gbk->kelas,
+                        'siswa_terburuk' => collect(),
+                        'trend_mingguan' => null,
+                    ];
+                    $trendMingguan = $perKelas['trend_mingguan'];
+                    $isStale = $kelasStale->contains('kelas_id', $gbk->kelas_id);
+                    $isBelum = $kelasBelumGenerate->contains('kelas_id', $gbk->kelas_id);
+                @endphp
+                <div class="overflow-hidden rounded-xl border {{ $isStale || $isBelum ? 'border-amber-200' : 'border-gray-200' }} bg-white hover:border-pink-300 hover:shadow-sm transition-all">
+                    @php $siswaPreview = $perKelas['siswa_terburuk']->take(5); @endphp
+                    <div class="flex items-center justify-between gap-3 border-b border-gray-100 bg-gray-50 px-5 py-3.5">
+                        <div class="flex items-center gap-2.5">
+                            <div class="flex h-8 w-8 items-center justify-center rounded-full bg-pink-100 text-pink-700 font-bold text-xs shrink-0">
+                                {{ strtoupper(substr($gbk->kelas->nama_kelas ?? '?', 0, 2)) }}
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-900 group-hover:text-pink-700 transition-colors">
+                                    {{ $gbk->kelas->nama_kelas ?? '-' }}
+                                </h3>
+                                <div class="mt-1 flex flex-wrap items-center gap-1.5">
+                                    @if ($isBelum)
+                                        <span class="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">Belum generate</span>
+                                    @elseif ($isStale)
+                                        <span class="rounded-full bg-amber-50 border border-amber-200 px-2 py-0.5 text-xs text-amber-700">Stale</span>
+                                    @endif
+                                    @include('partials.trend-mingguan-badge', ['trend' => $trendMingguan])
+                                </div>
+                            </div>
+                        </div>
+                        <a href="{{ route('guru_bk.monitoring.show', $gbk->kelas_id) }}" class="text-xs font-medium text-pink-700 hover:text-pink-800 transition-colors shrink-0 ml-2">
+                            Lihat semua siswa →
+                        </a>
+                    </div>
+
+                    <div class="px-5 py-4">
+                        @if ($siswaPreview->isEmpty())
+                            <p class="text-sm text-gray-400 italic">Belum ada data siswa untuk kelas ini.</p>
+                        @else
+                            <div class="divide-y divide-gray-50">
+                                @foreach ($siswaPreview as $item)
+                                    <div class="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0">
+                                        <div class="flex items-center gap-2.5 min-w-0">
+                                            <div class="flex h-7 w-7 items-center justify-center rounded-full bg-gray-100 text-xs font-semibold text-gray-600 shrink-0">
+                                                {{ strtoupper(substr($item->siswa->nama ?? '?', 0, 1)) }}
+                                            </div>
+                                            <div class="min-w-0">
+                                                <p class="text-sm font-medium text-gray-800 truncate">{{ $item->siswa->nama ?? '-' }}</p>
+                                                <p class="text-xs text-gray-400">NIS {{ $item->siswa->nis ?? '' }}</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center gap-2 shrink-0">
+                                            @include('partials.badge-kategori', ['kategori' => $item->kategori ?? null])
+                                            <span class="text-sm font-bold font-mono text-gray-700">{{ number_format($item->skor_akhir ?? 0, 2) }}</span>
+                                            @include('partials.trend-indicator', ['trend' => $item->trend_harian ?? null])
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            @empty
+                <div class="rounded-xl border border-dashed border-gray-300 bg-white p-12 text-center">
+                    <p class="font-medium text-gray-600">Belum ada kelas yang diampu</p>
+                    <p class="mt-1 text-sm text-gray-400">Data kelas akan muncul setelah admin membuat penugasan BK.</p>
+                </div>
+            @endforelse
+        </div>
+
     </div>
 @endsection

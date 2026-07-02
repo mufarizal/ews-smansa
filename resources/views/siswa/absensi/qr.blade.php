@@ -2,6 +2,15 @@
 @section('title', 'Absensi QR')
 @section('content')
     <div class="mx-auto max-w-2xl px-4 py-8">
+        <div class="mb-6">
+            <a href="{{ route('siswa.dashboard') }}" class="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+                Kembali
+            </a>
+        </div>
+
         <div class="mb-8">
             <h1 class="text-3xl font-bold text-gray-900">Absensi QR</h1>
             <p class="mt-2 text-gray-600">Pindai QR code dari guru piket atau gunakan kamera untuk scan barcode</p>

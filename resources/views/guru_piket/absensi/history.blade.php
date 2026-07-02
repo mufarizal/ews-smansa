@@ -6,10 +6,9 @@
             <div class="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div>
                     <p class="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Riwayat Absensi</p>
-                    <h1 class="mt-2 text-3xl font-bold text-slate-900">History berbasis QR Session</h1>
+                    <h1 class="mt-2 text-3xl font-bold text-slate-900">History Absensi Guru Piket</h1>
                     <p class="mt-2 max-w-2xl text-sm text-slate-600">
-                        Pilih session tertentu, lalu filter siswa berdasarkan kelas, nama, atau status tanpa harus memuat
-                        seluruh riwayat sekaligus.
+                        Filter riwayat absensi melalui tahapan: Pilih Hari &rarr; Pilih Tanggal &rarr; Pilih Sesi QR &rarr; Lihat Detail.
                     </p>
                 </div>
             </div>
@@ -23,10 +22,51 @@
             <div class="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
                 <aside class="space-y-6">
                     <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                        <div class="mb-4">
+                            <h2 class="text-base font-semibold text-slate-900">Filter Riwayat</h2>
+                            <p class="text-xs text-slate-500">Tahap 1: Pilih hari piket</p>
+                        </div>
+
+                        <form method="GET" action="{{ route('guru_piket.attendance.history') }}" class="space-y-4">
+                            <div>
+                                <label for="hari" class="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                    Hari Piket
+                                </label>
+                                <select id="hari" name="hari" onchange="this.form.submit()"
+                                    class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                                    <option value="">-- Pilih Hari --</option>
+                                    @foreach ($piketDays as $hari)
+                                        <option value="{{ $hari }}" {{ $selectedHari === $hari ? 'selected' : '' }}>
+                                            {{ $hari }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            @if ($selectedHari)
+                                <div>
+                                    <label for="tanggal" class="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                        Tahap 2: Pilih Tanggal
+                                    </label>
+                                    <select id="tanggal" name="tanggal" onchange="this.form.submit()"
+                                        class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                                        <option value="">-- Pilih Tanggal --</option>
+                                        @foreach ($datesForSelectedHari as $date)
+                                            <option value="{{ $date }}" {{ $selectedTanggal === $date ? 'selected' : '' }}>
+                                                {{ \Carbon\Carbon::parse($date)->locale('id')->isoFormat('dddd, D MMMM YYYY') }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            @endif
+                        </form>
+                    </div>
+
+                    <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                         <div class="mb-4 flex items-center justify-between">
                             <div>
                                 <h2 class="text-base font-semibold text-slate-900">Pilih Session</h2>
-                                <p class="text-xs text-slate-500">Cari berdasarkan tanggal, jam, atau kode sesi</p>
+                                <p class="text-xs text-slate-500">Tahap 3: Pilih sesi QR yang ingin dilihat</p>
                             </div>
                             <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
                                 {{ collect($availableHistorySessions ?? [])->sum(fn($group) => count($group['sessions'] ?? [])) }}
@@ -35,7 +75,8 @@
                         </div>
 
                         <form method="GET" action="{{ route('guru_piket.attendance.history') }}" class="mb-4">
-                            <input type="hidden" name="qr_session_id" value="{{ $selectedSessionId ?? '' }}">
+                            <input type="hidden" name="hari" value="{{ $selectedHari }}">
+                            <input type="hidden" name="tanggal" value="{{ $selectedTanggal }}">
                             <input type="hidden" name="status" value="{{ $status }}">
                             <input type="hidden" name="kelas_id" value="{{ $kelasId }}">
                             <input type="hidden" name="search" value="{{ $search }}">
@@ -63,6 +104,8 @@
                                             @php
                                                 $isActive = (int) ($selectedSessionId ?? 0) === (int) $session['id'];
                                                 $query = array_merge(request()->except(['qr_session_id', 'page']), [
+                                                    'hari' => $selectedHari,
+                                                    'tanggal' => $selectedTanggal,
                                                     'qr_session_id' => $session['id'],
                                                 ]);
                                             @endphp
@@ -79,6 +122,9 @@
                                                                 • Max {{ $session['jam_maksimal'] }}
                                                             @endif
                                                         </p>
+                                                        @if (!empty($session['guru_nama']))
+                                                            <p class="mt-1 text-xs text-orange-600">Guru: {{ $session['guru_nama'] }}</p>
+                                                        @endif
                                                     </div>
                                                     <span
                                                         class="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold {{ $session['status_label'] === 'Aktif' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600' }}">
@@ -96,7 +142,13 @@
                             @empty
                                 <div
                                     class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
-                                    Belum ada QR session yang bisa ditampilkan.
+                                    @if (!$selectedHari)
+                                        Pilih hari piket terlebih dahulu untuk menampilkan riwayat.
+                                    @elseif (!$selectedTanggal)
+                                        Tidak ada tanggal absensi untuk hari yang dipilih.
+                                    @else
+                                        Tidak ada sesi QR untuk tanggal yang dipilih.
+                                    @endif
                                 </div>
                             @endforelse
                         </div>
@@ -104,7 +156,7 @@
                 </aside>
 
                 <main class="space-y-6">
-                    @if ($selectedSession)
+                    @if ($selectedSession && $selectedSessionId)
                         <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                             <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                                 <div>
@@ -121,6 +173,11 @@
                                     <p class="mt-1 text-sm text-slate-600">Kode sesi <span
                                             class="font-semibold text-slate-900">{{ $selectedSession->kode_sesi }}</span> •
                                         {{ $selectedSession->absensis_count ?? 0 }} data absensi tercatat</p>
+                                    @if ($selectedSession->dibuat?->guru)
+                                        <p class="mt-1 text-xs text-orange-600">Guru Pembuat: {{ $selectedSession->dibuat->guru->nama }}</p>
+                                    @elseif ($selectedSession->dibuat)
+                                        <p class="mt-1 text-xs text-orange-600">Guru Pembuat: {{ $selectedSession->dibuat->name }}</p>
+                                    @endif
                                 </div>
 
                                 <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -141,7 +198,7 @@
                                     </div>
                                     <div class="rounded-xl bg-slate-50 px-4 py-3">
                                         <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Tercatat</p>
-                                        <p class="mt-1 text-sm font-semibold text-slate-900">{{ $stats['tercatat'] }}</p>
+                                        <p class="mt-1 text-sm font-semibold text-slate-900">{{ $stats['tercatat'] ?? 0 }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -150,29 +207,31 @@
                         <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
                             <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                                 <p class="text-sm text-slate-500">Total Siswa</p>
-                                <p class="mt-2 text-3xl font-bold text-slate-900">{{ $stats['total'] }}</p>
+                                <p class="mt-2 text-3xl font-bold text-slate-900">{{ $stats['total'] ?? 0 }}</p>
                             </div>
                             <div class="rounded-2xl border border-emerald-200 bg-white p-4 shadow-sm">
                                 <p class="text-sm text-slate-500">Hadir Tepat Waktu</p>
-                                <p class="mt-2 text-3xl font-bold text-emerald-600">{{ $stats['hadir'] }}</p>
+                                <p class="mt-2 text-3xl font-bold text-emerald-600">{{ $stats['hadir'] ?? 0 }}</p>
                             </div>
                             <div class="rounded-2xl border border-amber-200 bg-white p-4 shadow-sm">
                                 <p class="text-sm text-slate-500">Terlambat</p>
-                                <p class="mt-2 text-3xl font-bold text-amber-600">{{ $stats['terlambat'] }}</p>
+                                <p class="mt-2 text-3xl font-bold text-amber-600">{{ $stats['terlambat'] ?? 0 }}</p>
                             </div>
                             <div class="rounded-2xl border border-rose-200 bg-white p-4 shadow-sm">
                                 <p class="text-sm text-slate-500">Tidak Hadir</p>
-                                <p class="mt-2 text-3xl font-bold text-rose-600">{{ $stats['alpha'] }}</p>
+                                <p class="mt-2 text-3xl font-bold text-rose-600">{{ $stats['alpha'] ?? 0 }}</p>
                             </div>
                             <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                                 <p class="text-sm text-slate-500">Belum Absen</p>
-                                <p class="mt-2 text-3xl font-bold text-slate-700">{{ $stats['belum_absen'] }}</p>
+                                <p class="mt-2 text-3xl font-bold text-slate-700">{{ $stats['belum_absen'] ?? 0 }}</p>
                             </div>
                         </section>
 
                         <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                             <form method="GET" action="{{ route('guru_piket.attendance.history') }}" class="space-y-4">
                                 <input type="hidden" name="qr_session_id" value="{{ $selectedSessionId }}">
+                                <input type="hidden" name="hari" value="{{ $selectedHari }}">
+                                <input type="hidden" name="tanggal" value="{{ $selectedTanggal }}">
                                 <input type="hidden" name="session_search" value="{{ $sessionSearch }}">
                                 @php
                                     $kelasList = $availableClasses ?? collect();
@@ -224,7 +283,7 @@
                                             class="rounded-xl bg-green-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-green-800">
                                             Terapkan
                                         </button>
-                                        <a href="{{ route('guru_piket.attendance.history', ['qr_session_id' => $selectedSessionId]) }}"
+                                        <a href="{{ route('guru_piket.attendance.history', ['qr_session_id' => $selectedSessionId, 'hari' => $selectedHari, 'tanggal' => $selectedTanggal]) }}"
                                             class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
                                             Reset
                                         </a>
@@ -244,15 +303,15 @@
 
                                 <div class="flex flex-wrap gap-2">
                                     <a href="{{ route('guru_piket.attendance.export', array_merge(request()->except('format'), ['qr_session_id' => $selectedSessionId, 'format' => 'xlsx'])) }}"
-                                        class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700">
+                                        class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700">
                                         Export Excel
                                     </a>
                                     <a href="{{ route('guru_piket.attendance.export', array_merge(request()->except('format'), ['qr_session_id' => $selectedSessionId, 'format' => 'csv'])) }}"
-                                        class="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-700">
+                                        class="inline-flex items-center gap-2 rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-700">
                                         Export CSV
                                     </a>
                                     <button type="button" onclick="window.print()"
-                                        class="inline-flex items-center gap-2 rounded-xl bg-slate-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800">
+                                        class="inline-flex items-center gap-2 rounded-lg bg-slate-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800">
                                         Print
                                     </button>
                                 </div>
@@ -396,8 +455,15 @@
                                 </svg>
                             </div>
                             <h3 class="mt-4 text-lg font-semibold text-slate-900">Belum ada session QR</h3>
-                            <p class="mt-2 text-sm text-slate-500">Generate QR terlebih dahulu supaya riwayat bisa
-                                ditelusuri per session.</p>
+                            <p class="mt-2 text-sm text-slate-500">
+                                @if (!$selectedHari)
+                                    Pilih hari piket terlebih dahulu untuk menampilkan riwayat absensi.
+                                @elseif (!$selectedTanggal)
+                                    Pilih tanggal absensi untuk hari yang telah dipilih.
+                                @else
+                                    Generate QR terlebih dahulu supaya riwayat bisa ditelusuri per session.
+                                @endif
+                            </p>
                         </section>
                     @endif
                 </main>

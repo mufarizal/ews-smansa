@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\DB;
 
 class GuruAssignmentController extends Controller
 {
-    private const PIKET_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+    private const PIKET_DAYS = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'];
 
     // ============ Index Pages ============
 
@@ -46,10 +46,10 @@ class GuruAssignmentController extends Controller
         $activeSemester = Semester::where('is_active', true)->first();
 
         $gurus = Guru::with([
-            'guruMapelKelas' => fn($q) => $q->with(['mapel', 'kelas'])
-                ->when($activeSemester, fn($q) => $q->where('semester_id', $activeSemester->id)),
-            'guruBkKelas' => fn($q) => $q->with('kelas')
-                ->when($activeSemester, fn($q) => $q->where('semester_id', $activeSemester->id)),
+            'guruMapelKelas' => fn ($q) => $q->with(['mapel', 'kelas'])
+                ->when($activeSemester, fn ($q) => $q->where('semester_id', $activeSemester->id)),
+            'guruBkKelas' => fn ($q) => $q->with('kelas')
+                ->when($activeSemester, fn ($q) => $q->where('semester_id', $activeSemester->id)),
         ])->orderBy('nama')->get();
 
         return [
@@ -120,7 +120,7 @@ class GuruAssignmentController extends Controller
         $request->validate([
             'guru_id' => 'required|exists:gurus,id',
             'piket_days' => 'required|array|min:1',
-            'piket_days.*' => 'in:' . implode(',', self::PIKET_DAYS),
+            'piket_days.*' => 'in:'.implode(',', self::PIKET_DAYS),
         ]);
 
         $guru = Guru::findOrFail($request->guru_id);

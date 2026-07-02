@@ -35,4 +35,18 @@ return [
         ],
     ],
 
+    'ai' => [
+        'provider' => env('AI_PROVIDER', 'gemini'),
+    ],
+
+    'ai_studio' => [
+        'key_1' => env('AI_STUDIO_PRIMARY_KEY'),
+        'key_2' => env('AI_STUDIO_SECONDARY_KEY'),
+        'model' => env('AI_STUDIO_MODEL'),
+    ],
+
+    'ollama' => [
+        'url' => env('OLLAMA_URL'),
+        'model' => env('OLLAMA_MODEL'),
+    ],
 ];

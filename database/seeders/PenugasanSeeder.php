@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -129,15 +128,17 @@ class PenugasanSeeder extends Seeder
             $guruId = $guru[$guruKey] ?? null;
             $mapelId = $mapel[$mapelKey] ?? null;
 
-            if (!$guruId || !$mapelId) {
+            if (! $guruId || ! $mapelId) {
                 $this->command->warn("SKIP — guru/mapel tidak ditemukan: {$guruKey} / {$mapelKey}");
+
                 continue;
             }
 
             foreach ($kelasList as $huruf) {
                 $kelasId = $kelas[$huruf] ?? null;
-                if (!$kelasId) {
+                if (! $kelasId) {
                     $this->command->warn("SKIP — kelas tidak ditemukan: {$huruf}");
+
                     continue;
                 }
 
@@ -157,6 +158,6 @@ class PenugasanSeeder extends Seeder
             DB::table('guru_mapel_kelas')->insert($chunk);
         }
 
-        $this->command->info('GuruMapelKelasSeeder selesai — ' . count($rows) . ' baris diinsert.');
+        $this->command->info('GuruMapelKelasSeeder selesai — '.count($rows).' baris diinsert.');
     }
 }

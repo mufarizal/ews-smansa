@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Mapel;
 use Illuminate\Database\Seeder;
 
 class MapelSeeder extends Seeder
@@ -42,7 +42,7 @@ class MapelSeeder extends Seeder
         ];
 
         foreach ($mapelData as $data) {
-            \App\Models\Mapel::create($data);
+            Mapel::create($data);
         }
     }
 }

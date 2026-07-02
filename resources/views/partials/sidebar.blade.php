@@ -59,57 +59,69 @@
             $multiRole = $userRoles->count() > 1;
         @endphp
 
-        <div class="relative px-4 pt-3 pb-2">
+        <div class="border-b border-white/10">
             @if ($multiRole)
-                <button onclick="toggleRoleMenu()" id="role-btn"
-                    class="flex w-full items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-left transition hover:bg-white/10">
+                {{-- Toggle button --}}
+                <button onclick="toggleRoleMenu()" id="role-btn" aria-expanded="false"
+                    class="flex w-full items-center justify-between px-4 py-2.5 transition hover:bg-white/5">
                     <div class="flex items-center gap-2">
                         <span
                             class="rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest {{ $badge['class'] }}">
                             {{ $badge['label'] }}
                         </span>
-                        <span class="text-xs text-white/50">aktif</span>
+                        <span class="text-[11px] text-white/40">aktif</span>
                     </div>
-                    <i class="ti ti-selector text-sm text-white/40"></i>
+                    <i class="ti ti-chevron-down text-sm text-white/35 transition-transform duration-200"
+                        id="role-chevron"></i>
                 </button>
 
-                <div id="role-menu"
-                    class="absolute left-4 right-4 top-full z-50 mt-1 hidden overflow-hidden rounded-lg border border-white/10 bg-green-900 shadow-xl">
-                    <p class="px-3 pt-2.5 pb-1 text-[10px] font-bold uppercase tracking-widest text-white/30">
-                        Pindah ke Role
-                    </p>
-                    @foreach ($userRoles as $role)
-                        @php
-                            $rm = $roleMeta[$role->slug] ?? [
-                                'label' => $role->name,
-                                'class' => 'bg-stone-400 text-stone-950',
-                            ];
-                            $isCurrentRole = $role->slug === $activeRoleKey;
-                        @endphp
-                        <form method="POST" action="{{ route('role.switch') }}">
-                            @csrf
-                            <input type="hidden" name="role" value="{{ $role->slug }}">
-                            <button type="submit"
-                                class="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm transition
-                                       {{ $isCurrentRole ? 'bg-green-800/60 text-white' : 'text-white/70 hover:bg-white/5 hover:text-white' }}">
-                                <span
-                                    class="h-2 w-2 shrink-0 rounded-full {{ $isCurrentRole ? 'bg-yellow-400' : 'bg-transparent' }}"></span>
-                                <span
-                                    class="inline-block rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide {{ $rm['class'] }}">
-                                    {{ $rm['label'] }}
-                                </span>
-                                @if ($isCurrentRole)
-                                    <i class="ti ti-check ml-auto text-sm text-yellow-400"></i>
-                                @endif
-                            </button>
-                        </form>
-                    @endforeach
+                {{-- Dropdown — max 3 item visible, sisanya scroll --}}
+                <div id="role-menu" class="overflow-hidden transition-all duration-200 ease-in-out"
+                    style="max-height: 0;">
+                    <div
+                        class="max-h-[126px] overflow-y-auto
+                                [&::-webkit-scrollbar]:w-1
+                                [&::-webkit-scrollbar-thumb]:rounded
+                                [&::-webkit-scrollbar-thumb]:bg-white/20
+                                [&::-webkit-scrollbar-track]:bg-transparent">
+                        @foreach ($userRoles as $role)
+                            @php
+                                $rm = $roleMeta[$role->slug] ?? [
+                                    'label' => $role->name,
+                                    'class' => 'bg-stone-400 text-stone-950',
+                                ];
+                                $isCurrentRole = $role->slug === $activeRoleKey;
+                            @endphp
+                            <form method="POST" action="{{ route('role.switch') }}">
+                                @csrf
+                                <input type="hidden" name="role" value="{{ $role->slug }}">
+                                <button type="submit"
+                                    class="flex w-full items-center gap-2.5 border-l-2 px-4 py-2.5 text-left text-sm transition
+                                           {{ $isCurrentRole
+                                               ? 'border-yellow-400 bg-white/5 text-white'
+                                               : 'border-transparent text-white/55 hover:bg-white/5 hover:text-white/85' }}">
+                                    <span
+                                        class="h-1.5 w-1.5 shrink-0 rounded-full
+                                                 {{ $isCurrentRole ? 'bg-yellow-400' : 'bg-transparent' }}"></span>
+                                    <span
+                                        class="inline-block rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide {{ $rm['class'] }}">
+                                        {{ $rm['label'] }}
+                                    </span>
+                                    @if ($isCurrentRole)
+                                        <i class="ti ti-check ml-auto text-sm text-yellow-400"></i>
+                                    @endif
+                                </button>
+                            </form>
+                        @endforeach
+                    </div>
                 </div>
             @else
-                <span
-                    class="inline-block rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest {{ $badge['class'] }}">
-                    {{ $badge['label'] }}
-                </span>
+                <div class="px-4 py-2.5">
+                    <span
+                        class="inline-block rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest {{ $badge['class'] }}">
+                        {{ $badge['label'] }}
+                    </span>
+                </div>
             @endif
         </div>
 
@@ -143,8 +155,6 @@
                             'label' => 'Dashboard',
                             'route' => route('kurikulum.dashboard'),
                         ],
-                
-                        // ── Data Master ──────────────────────────────
                         [
                             'icon' => 'calendar',
                             'label' => 'Manajemen Semester',
@@ -160,8 +170,6 @@
                             'label' => 'Mata Pelajaran',
                             'route' => route('kurikulum.mapel.index'),
                         ],
-                
-                        // ── SDM ──────────────────────────────────────
                         [
                             'icon' => 'users',
                             'label' => 'Manajemen Siswa',
@@ -177,8 +185,6 @@
                             'label' => 'Penugasan Guru',
                             'route' => route('kurikulum.penugasan-guru.mapel.index'),
                         ],
-                
-                        // ── Operasional ──────────────────────────────
                         [
                             'icon' => 'calendar-clock',
                             'label' => 'Jadwal Pelajaran',
@@ -192,6 +198,7 @@
                     ],
                 ])
             @endif
+
             @if ($activeRoleKey === 'guru_mapel')
                 @include('partials.sidebar', [
                     '_group' => 'Guru Mata Pelajaran',
@@ -212,14 +219,24 @@
                             'route' => route('guru_mapel.absensi.index'),
                         ],
                         [
-                            'icon' => 'pencil',
-                            'label' => 'Input Nilai',
-                            'route' => '#',
+                            'icon' => 'book-2',
+                            'label' => 'Bab & Materi',
+                            'route' => route('guru_mapel.bab.index'),
                         ],
                         [
-                            'icon' => 'list',
-                            'label' => 'Rekap Nilai',
-                            'route' => '#',
+                            'icon' => 'pencil',
+                            'label' => 'Tugas',
+                            'route' => route('guru_mapel.tugas.index'),
+                        ],
+                        [
+                            'icon' => 'file-text',
+                            'label' => 'Ujian Harian',
+                            'route' => route('guru_mapel.ujian.index'),
+                        ],
+                        [
+                            'icon' => 'alert-triangle',
+                            'label' => 'Perilaku Siswa',
+                            'route' => route('guru_mapel.perilaku-siswa.index'),
                         ],
                     ],
                 ])
@@ -236,13 +253,13 @@
                         ],
                         [
                             'icon' => 'users',
-                            'label' => 'Kelas Saya',
+                            'label' => 'Monitoring Siswa',
                             'route' => route('wali_kelas.kelas-saya.index'),
                         ],
                         [
-                            'icon' => 'bell',
-                            'label' => 'Peringatan',
-                            'route' => '#',
+                            'icon' => 'alert-triangle',
+                            'label' => 'Perilaku Siswa',
+                            'route' => route('wali_kelas.perilaku-siswa.index'),
                         ],
                     ],
                 ])
@@ -271,7 +288,7 @@
                 ])
             @endif
 
-            @if ($activeRoleKey === 'guru_bk')
+                    @if ($activeRoleKey === 'guru_bk')
                 @include('partials.sidebar', [
                     '_group' => 'Guru BK',
                     '_items' => [
@@ -281,9 +298,19 @@
                             'route' => route('guru_bk.dashboard'),
                         ],
                         [
+                            'icon' => 'chart-line',
+                            'label' => 'Monitoring SAW',
+                            'route' => route('guru_bk.monitoring.index'),
+                        ],
+                        [
                             'icon' => 'school',
                             'label' => 'Pengajaran Saya',
                             'route' => route('guru_bk.pengajaran-saya.index'),
+                        ],
+                        [
+                            'icon' => 'clipboard-list',
+                            'label' => 'Point Perilaku',
+                            'route' => route('guru_bk.point-perilaku.index'),
                         ],
                     ],
                 ])
@@ -299,14 +326,24 @@
                             'route' => route('siswa.dashboard'),
                         ],
                         [
+                            'icon' => 'user',
+                            'label' => 'Profil Saya',
+                            'route' => route('siswa.profil.index'),
+                        ],
+                        [
                             'icon' => 'scan',
                             'label' => 'Scan QR Absensi',
                             'route' => route('siswa.qr.scan'),
                         ],
                         [
-                            'icon' => 'clock',
-                            'label' => 'Absensi',
-                            'route' => '#',
+                            'icon' => 'pencil',
+                            'label' => 'Tugas',
+                            'route' => route('siswa.tugas.index'),
+                        ],
+                        [
+                            'icon' => 'file-text',
+                            'label' => 'Ujian Harian',
+                            'route' => route('siswa.ujian.index'),
                         ],
                     ],
                 ])
@@ -323,13 +360,31 @@
 
     <script>
         function toggleRoleMenu() {
-            document.getElementById('role-menu').classList.toggle('hidden');
+            const menu = document.getElementById('role-menu');
+            const chevron = document.getElementById('role-chevron');
+            const btn = document.getElementById('role-btn');
+            const isOpen = menu.style.maxHeight !== '0px' && menu.style.maxHeight !== '';
+
+            if (isOpen) {
+                menu.style.maxHeight = '0';
+                chevron.style.transform = 'rotate(0deg)';
+                btn.setAttribute('aria-expanded', 'false');
+            } else {
+                menu.style.maxHeight = menu.scrollHeight + 'px';
+                chevron.style.transform = 'rotate(180deg)';
+                btn.setAttribute('aria-expanded', 'true');
+            }
         }
+
         document.addEventListener('click', function(e) {
             const btn = document.getElementById('role-btn');
             const menu = document.getElementById('role-menu');
-            if (menu && btn && !btn.contains(e.target) && !menu.contains(e.target)) {
-                menu.classList.add('hidden');
+            if (!menu || !btn) return;
+            const isOpen = menu.style.maxHeight !== '0px' && menu.style.maxHeight !== '';
+            if (isOpen && !btn.contains(e.target) && !menu.contains(e.target)) {
+                menu.style.maxHeight = '0';
+                document.getElementById('role-chevron').style.transform = 'rotate(0deg)';
+                btn.setAttribute('aria-expanded', 'false');
             }
         });
     </script>

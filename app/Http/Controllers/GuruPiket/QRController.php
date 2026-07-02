@@ -2,18 +2,20 @@
 
 namespace App\Http\Controllers\GuruPiket;
 
+use App\Exports\AttendanceReportExport;
+use App\Helpers\LocationHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Absensi;
+use App\Models\Guru;
+use App\Models\Jadwal;
 use App\Models\Kelas;
 use App\Models\QRSession;
 use App\Models\Siswa;
-use App\Exports\AttendanceReportExport;
-use App\Helpers\LocationHelper;
-use Maatwebsite\Excel\Facades\Excel;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
+use Maatwebsite\Excel\Facades\Excel;
 
 class QRController extends Controller
 {
@@ -22,18 +24,20 @@ class QRController extends Controller
      */
     public function index()
     {
-        // Ambil QR sessions aktif dari database untuk hari ini - order by latest first
+        // Ambil QR sessions aktif milik guru yang login untuk hari ini.
         $qrSessions = QRSession::where('tanggal', now()->format('Y-m-d'))
             ->where('sudah_ditutup', false)
+            ->where('dibuat_oleh', Auth::id())
             ->orderBy('updated_at', 'desc')
             ->orderBy('created_at', 'desc')
             ->get();
 
         $attendedStudents = [];
         if ($qrSessions->count() > 0) {
-            // Ambil siswa yang sudah absen hari ini dengan detail lengkap
+            // Ambil siswa yang sudah absen pada QR session milik guru yang login.
             $attendedStudents = Absensi::where('tanggal', now()->format('Y-m-d'))
                 ->where('status', '!=', 'alpha')
+                ->whereIn('qr_session_id', $qrSessions->pluck('id'))
                 ->with(['siswa', 'siswa.kelas'])
                 ->orderBy('jam_masuk', 'desc')
                 ->get()
@@ -72,23 +76,34 @@ class QRController extends Controller
 
     /**
      * Generate QR code untuk absensi harian dengan tipe masuk/pulang
-     * 
+     *
      * Masuk: Generates QR with jam_batas (threshold) dan jam_maksimal (hard deadline)
      * Pulang: Generates QR with jam_batas (earliest scan time)
      */
     public function generate(Request $request)
     {
+        $tanggal = $request->tanggal;
+        $tipe = $request->tipe;
+        $jamBatas = $request->jam_batas;
+        $jamMaksimal = $request->jam_maksimal;
+
+        $currentGuru = Auth::user()->guru;
+        if (! $currentGuru) {
+            return back()->with('error', 'Data guru piket tidak ditemukan. Hubungi administrator.');
+        }
+
+        $tanggalHari = $tanggal ? Jadwal::carbonToHari(Carbon::parse($tanggal)) : null;
+
+        if ($tanggalHari && ! $currentGuru->isPiketOnDay($tanggalHari)) {
+            return back()->with('error', 'Anda tidak memiliki jadwal piket pada tanggal tersebut sehingga tidak dapat membuat sesi absensi.');
+        }
+
         $request->validate([
             'tanggal' => 'required|date_format:Y-m-d|after_or_equal:today',
             'tipe' => 'required|in:masuk,pulang',
             'jam_batas' => 'required|date_format:H:i',
             'jam_maksimal' => 'required_if:tipe,masuk|nullable|date_format:H:i',
         ]);
-
-        $tanggal = $request->tanggal;
-        $tipe = $request->tipe;
-        $jamBatas = $request->jam_batas;
-        $jamMaksimal = $request->jam_maksimal;
 
         // Validasi: jam_maksimal harus lebih besar dari jam_batas untuk masuk
         if ($tipe === 'masuk' && $jamMaksimal) {
@@ -106,18 +121,23 @@ class QRController extends Controller
             ->where('sudah_ditutup', false)
             ->first();
 
+        if ($existingQR && (int) $existingQR->dibuat_oleh !== (int) Auth::id()) {
+            return back()->with('error', 'Sesi QR untuk tanggal dan tipe ini sudah dibuat oleh guru piket lain.');
+        }
+
         $currentQRSession = null;
 
         // Jika sudah ada QR aktif untuk hari ini dengan tipe yang sama, update session tersebut
         if ($existingQR) {
             $existingQR->update([
-                'jam_batas' => Carbon::createFromFormat('Y-m-d H:i', $tanggal . ' ' . $jamBatas, 'Asia/Jakarta'),
+                'jam_batas' => Carbon::createFromFormat('Y-m-d H:i', $tanggal.' '.$jamBatas, 'Asia/Jakarta'),
                 'jam_maksimal' => $tipe === 'masuk' && $jamMaksimal
-                    ? Carbon::createFromFormat('Y-m-d H:i', $tanggal . ' ' . $jamMaksimal, 'Asia/Jakarta')
+                    ? Carbon::createFromFormat('Y-m-d H:i', $tanggal.' '.$jamMaksimal, 'Asia/Jakarta')
                     : null,
                 'generated_at' => now(),
                 'expire_at' => Carbon::parse($tanggal)->endOfDay(),
-                'kode_sesi' => strtoupper(substr(md5($tanggal . $tipe . time()), 0, 8)),
+                'kode_sesi' => strtoupper(substr(md5($tanggal.$tipe.time()), 0, 8)),
+                'dibuat_oleh' => Auth::id(),
             ]);
 
             $currentQRSession = $existingQR->fresh();
@@ -132,14 +152,14 @@ class QRController extends Controller
             ]);
         } else {
             // Generate unique code untuk QR session
-            $kodeSesi = strtoupper(substr(md5($tanggal . $tipe . time()), 0, 8));
+            $kodeSesi = strtoupper(substr(md5($tanggal.$tipe.time()), 0, 8));
             $qrGeneratedAt = now();
             $qrExpireTime = Carbon::parse($tanggal)->endOfDay(); // Berlaku sampai akhir hari
 
             // Convert time strings to full datetime (combine with tanggal)
-            $jamBatasDateTime = Carbon::createFromFormat('Y-m-d H:i', $tanggal . ' ' . $jamBatas, 'Asia/Jakarta');
+            $jamBatasDateTime = Carbon::createFromFormat('Y-m-d H:i', $tanggal.' '.$jamBatas, 'Asia/Jakarta');
             $jamMaksimalDateTime = $tipe === 'masuk' && $jamMaksimal
-                ? Carbon::createFromFormat('Y-m-d H:i', $tanggal . ' ' . $jamMaksimal, 'Asia/Jakarta')
+                ? Carbon::createFromFormat('Y-m-d H:i', $tanggal.' '.$jamMaksimal, 'Asia/Jakarta')
                 : null;
 
             // Create new QR session
@@ -168,9 +188,10 @@ class QRController extends Controller
             ]);
         }
 
-        // Ambil siswa yang sudah absen untuk tipe dan tanggal ini
+        // Ambil siswa yang sudah absen untuk session QR ini.
         $attendedStudents = Absensi::where('tanggal', $tanggal)
             ->where('tipe', 'harian')
+            ->when($currentQRSession, fn ($q) => $q->where('qr_session_id', $currentQRSession->id))
             ->with('siswa')
             ->orderBy('jam_masuk', 'desc')
             ->get()
@@ -191,13 +212,12 @@ class QRController extends Controller
             })
             ->toArray();
 
-        // Re-fetch latest QR sessions to ensure latest data is displayed
         $qrSessions = QRSession::where('tanggal', $tanggal)
             ->where('sudah_ditutup', false)
+            ->where('dibuat_oleh', Auth::id())
             ->orderBy('updated_at', 'desc')
             ->orderBy('created_at', 'desc')
-            ->get()
-        ;
+            ->get();
 
         return view('guru_piket.absensi.qr', [
             'qrCodeUrl' => $currentQRSession?->kode_sesi
@@ -215,7 +235,7 @@ class QRController extends Controller
      */
     private function getTotalStudents()
     {
-        return \App\Models\Siswa::count();
+        return Siswa::count();
     }
 
     /**
@@ -225,10 +245,11 @@ class QRController extends Controller
     {
         $qrSession = QRSession::where('tanggal', now()->format('Y-m-d'))
             ->where('sudah_ditutup', false)
+            ->where('dibuat_oleh', Auth::id())
             ->orderBy('updated_at', 'desc')
             ->first();
 
-        if (!$qrSession) {
+        if (! $qrSession) {
             return response()->json(['error' => 'No active QR session'], 400);
         }
 
@@ -264,12 +285,15 @@ class QRController extends Controller
      */
     public function resetSession()
     {
-        QRSession::where('sudah_ditutup', false)->update([
-            'sudah_ditutup' => true,
-            'expire_at' => now(),
-        ]);
+        $affected = QRSession::where('sudah_ditutup', false)
+            ->where('dibuat_oleh', Auth::id())
+            ->update([
+                'sudah_ditutup' => true,
+                'expire_at' => now(),
+            ]);
 
-        return redirect()->route('guru_piket.qr')->with('success', 'Session QR telah direset');
+        return redirect()->route('guru_piket.qr')
+            ->with('success', 'Session QR Anda telah direset. Jumlah sesi: '.$affected.'.');
     }
 
     /**
@@ -282,12 +306,30 @@ class QRController extends Controller
         $status = $request->input('status', 'semua');
         $kelasId = $request->input('kelas_id');
         $search = trim((string) $request->input('search', ''));
+        $selectedHari = $request->input('hari');
+        $selectedTanggal = $request->input('tanggal');
 
+        // Ambil hari piket guru di semester aktif untuk validasi dan filter.
+        $piketDays = [];
+        if ($currentGuru) {
+            $piketDays = $currentGuru->getPiketDaysActiveSemester();
+        }
+
+        $selectedHari = $selectedHari ? Guru::convertHariToIndonesia((string) $selectedHari) : null;
+        if ($selectedHari && ! in_array($selectedHari, $piketDays, true)) {
+            abort(403, 'Anda tidak memiliki akses ke hari yang dipilih.');
+        }
+
+        // Ambil QR session milik guru yang login, lalu filter berdasarkan hari piket.
         $historySessions = QRSession::query()
+            ->where('dibuat_oleh', Auth::id())
             ->withCount('absensis')
+            ->with('dibuat.guru')
+            ->when($piketDays, fn ($q) => $q->forPiketDays($piketDays))
             ->orderByDesc('generated_at')
             ->get();
 
+        // Filter pencarian session (jika ada)
         if ($sessionSearch !== '') {
             $needle = mb_strtolower($sessionSearch);
 
@@ -305,8 +347,30 @@ class QRController extends Controller
             })->values();
         }
 
+        // Filter berdasarkan hari.
+        if ($selectedHari) {
+            $historySessions = $historySessions->filter(function (QRSession $session) use ($selectedHari) {
+                return Jadwal::carbonToHari(Carbon::parse($session->tanggal)) === $selectedHari;
+            })->values();
+        }
+
+        // Filter berdasarkan tanggal (Tahap 2)
+        if ($selectedTanggal) {
+            $historySessions = $historySessions->filter(function (QRSession $session) use ($selectedTanggal) {
+                return $session->tanggal === $selectedTanggal;
+            })->values();
+        }
+
+        // Kelompokkan session per tanggal untuk ditampilkan di filter Tahap 2
+        $datesForSelectedHari = $historySessions
+            ->pluck('tanggal')
+            ->unique()
+            ->sortDesc()
+            ->values();
+
+        // Susun data untuk session list (Tahap 3)
         $availableHistorySessions = $historySessions
-            ->groupBy(fn(QRSession $session) => Carbon::parse($session->tanggal)->format('Y-m-d'))
+            ->groupBy(fn (QRSession $session) => Carbon::parse($session->tanggal)->format('Y-m-d'))
             ->map(function ($sessions, $tanggal) {
                 return [
                     'tanggal' => $tanggal,
@@ -323,12 +387,14 @@ class QRController extends Controller
                             'absensis_count' => $session->absensis_count ?? 0,
                             'status_label' => $session->sudah_ditutup ? 'Ditutup' : 'Aktif',
                             'kode_sesi' => $session->kode_sesi,
+                            'guru_nama' => $session->dibuat?->guru?->nama ?? ($session->dibuat?->name ?? 'N/A'),
                         ];
                     })->values(),
                 ];
             })
             ->values();
 
+        // Tentukan session yang dipilih (Tahap 4)
         $selectedSession = $historySessions->firstWhere('id', $selectedSessionId)
             ?? $historySessions->first();
 
@@ -337,9 +403,6 @@ class QRController extends Controller
         $availableClasses = Kelas::query()
             ->orderBy('nama_kelas')
             ->get(['id', 'nama_kelas']);
-
-        // Get current authenticated guru
-        $currentGuru = Auth::user()->guru;
 
         $attendancesQuery = Absensi::query()
             ->where('tipe', Absensi::TIPE_HARIAN)
@@ -362,8 +425,8 @@ class QRController extends Controller
 
         if ($search !== '') {
             $attendancesQuery->whereHas('siswa', function ($query) use ($search) {
-                $query->where('nama', 'like', '%' . $search . '%')
-                    ->orWhere('nis', 'like', '%' . $search . '%');
+                $query->where('nama', 'like', '%'.$search.'%')
+                    ->orWhere('nis', 'like', '%'.$search.'%');
             });
         }
 
@@ -404,6 +467,10 @@ class QRController extends Controller
             'availableHistorySessions' => $availableHistorySessions,
             'availableClasses' => $availableClasses,
             'currentGuru' => $currentGuru,
+            'piketDays' => $piketDays,
+            'selectedHari' => $selectedHari,
+            'selectedTanggal' => $selectedTanggal,
+            'datesForSelectedHari' => $datesForSelectedHari,
         ]);
     }
 
@@ -418,29 +485,36 @@ class QRController extends Controller
         $search = trim((string) $request->input('search', ''));
         $format = $request->input('format', 'xlsx');
 
+        // Keamanan: Pastikan session QR yang diekspor adalah milik guru yang login.
+        if ($qrSessionId) {
+            $qrSession = QRSession::find($qrSessionId);
+            if (! $qrSession || (int) $qrSession->dibuat_oleh !== (int) Auth::id()) {
+                abort(403, 'Anda tidak memiliki akses untuk mengekspor session ini.');
+            }
+        }
+
         try {
             $selectedSession = $qrSessionId ? QRSession::find($qrSessionId) : null;
-            $fileName = 'Laporan-Absensi-' . ($selectedSession ? Carbon::parse($selectedSession->tanggal)->format('d-m-Y') : now()->format('d-m-Y'));
+            $fileName = 'Laporan-Absensi-'.($selectedSession ? Carbon::parse($selectedSession->tanggal)->format('d-m-Y') : now()->format('d-m-Y'));
             if ($selectedSession) {
-                $fileName .= '-' . $selectedSession->generated_at?->format('His');
+                $fileName .= '-'.$selectedSession->generated_at?->format('His');
             }
 
             if ($format === 'xlsx') {
                 return Excel::download(
                     new AttendanceReportExport($qrSessionId, $status, $kelasId, $search),
-                    $fileName . '.xlsx'
+                    $fileName.'.xlsx'
                 );
             } else {
                 // CSV format
                 return Excel::download(
                     new AttendanceReportExport($qrSessionId, $status, $kelasId, $search),
-                    $fileName . '.csv'
+                    $fileName.'.csv'
                 );
             }
         } catch (\Exception $e) {
             return redirect()->route('guru_piket.attendance.history')
-                ->with('error', 'Gagal export laporan: ' . $e->getMessage());
+                ->with('error', 'Gagal export laporan: '.$e->getMessage());
         }
     }
 }
-

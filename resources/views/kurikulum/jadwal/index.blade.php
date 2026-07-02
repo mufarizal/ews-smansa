@@ -37,7 +37,7 @@
             @endif
         </div>
         <a href="{{ route('kurikulum.jadwal.create', ['type' => $type]) }}"
-            class="inline-flex items-center gap-1.5 rounded-lg bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-800">
+            class="inline-flex items-center gap-1.5 rounded-lg bg-green-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-green-800">
             <i class="ti ti-plus text-base"></i>
             {{ $type === 'kegiatan' ? 'Tambah Kegiatan' : 'Tambah Jadwal' }}
         </a>

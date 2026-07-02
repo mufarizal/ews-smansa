@@ -10,10 +10,8 @@ class GuruBkKelas extends Model
         'guru_id',
         'semester_id',
         'kelas_id',
-      
-    ];
 
-    
+    ];
 
     public function guru()
     {
@@ -30,4 +28,3 @@ class GuruBkKelas extends Model
         return $this->belongsTo(Semester::class);
     }
 }
-

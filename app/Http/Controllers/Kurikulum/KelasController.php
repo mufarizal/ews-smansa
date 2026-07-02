@@ -15,7 +15,6 @@ class KelasController extends Controller
     public function index(Request $request)
     {
         $search = trim((string) $request->get('search', ''));
-       
 
         $kelasQuery = Kelas::with(['waliKelas'])
             ->withCount(['siswas as siswa_count'])
@@ -31,9 +30,7 @@ class KelasController extends Controller
             });
         }
 
-
         $kelas = $kelasQuery->get();
-        
 
         return view('kurikulum.kelas.index', compact(
             'kelas',
@@ -119,7 +116,6 @@ class KelasController extends Controller
     /**
      * Get kelas by angkatan (for cascading select)
      */
-    
 
     /**
      * Remove the specified resource from storage.
@@ -127,6 +123,7 @@ class KelasController extends Controller
     public function destroy(Kelas $kelas)
     {
         $kelas->delete();
+
         return redirect()->route('kurikulum.kelas.index')->with('success', 'Kelas Berhasil Dihapus.');
     }
 }

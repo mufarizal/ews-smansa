@@ -5,8 +5,11 @@
 
     <div class="mb-6">
         <a href="{{ route('kurikulum.jadwal.index', ['type' => $type]) }}"
-            class="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-gray-600">
-            <i class="ti ti-arrow-left text-sm"></i> Kembali ke daftar jadwal
+            class="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+            Kembali
         </a>
         <h1 class="mt-2 text-2xl font-bold text-gray-900">
             {{ $type === 'kegiatan' ? 'Edit Kegiatan Mingguan' : 'Edit Jadwal Pelajaran' }}
@@ -322,13 +325,16 @@
         </div>
 
         {{-- Tombol --}}
-        <div class="flex justify-between gap-3">
-            <a href="{{ route('kurikulum.jadwal.index', ['type' => $type]) }}"
-                class="rounded-lg border border-gray-300 px-5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                Batal
-            </a>
-            <button type="submit"
-                class="inline-flex items-center gap-1.5 rounded-lg bg-green-700 px-5 py-2 text-sm font-medium text-white hover:bg-green-800">
+<div class="flex justify-between gap-3">
+             <a href="{{ route('kurikulum.jadwal.index', ['type' => $type]) }}"
+                 class="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                 </svg>
+                 Kembali
+             </a>
+             <button type="submit"
+                class="inline-flex items-center gap-1.5 rounded-lg bg-green-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-green-800">
                 <i class="ti ti-check"></i>
                 {{ $type === 'kegiatan' ? 'Simpan Perubahan Kegiatan' : 'Simpan Perubahan Jadwal' }}
             </button>

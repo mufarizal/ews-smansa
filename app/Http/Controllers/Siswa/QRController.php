@@ -8,7 +8,6 @@ use App\Service\AbsensiService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 
 class QRController extends Controller
 {
@@ -19,15 +18,12 @@ class QRController extends Controller
         $this->absensiService = $absensiService;
     }
 
-    /**
-     * Menampilkan halaman scan QR
-     */
     public function scan()
     {
         $siswa = Auth::user()->siswa;
 
-        if (!$siswa) {
-            Log::warning('Siswa tidak memiliki data - User ID: ' . Auth::user()->id);
+        if (! $siswa) {
+            Log::warning('Siswa tidak memiliki data - User ID: '.Auth::user()->id);
         }
 
         return view('siswa.absensi.qr');
@@ -45,16 +41,17 @@ class QRController extends Controller
         $qrPayload = $request->input('qr_code');
         $resolvedSession = $this->resolveSessionFromPayload($qrPayload);
 
-        Log::info('QR Process - User: ' . $user->email . ', Siswa: ' . ($siswa ? $siswa->id : 'null'));
+        Log::info('QR Process - User: '.$user->email.', Siswa: '.($siswa ? $siswa->id : 'null'));
 
-        if (!$siswa) {
+        if (! $siswa) {
             $message = 'Data siswa tidak ditemukan. Hubungi admin.';
             if ($wantsJsonResponse) {
                 return response()->json([
                     'success' => false,
-                    'message' => $message
+                    'message' => $message,
                 ], 422);
             }
+
             return redirect()->back()->with('error', $message);
         }
 
@@ -66,7 +63,7 @@ class QRController extends Controller
             $deviceId = $request->input('device_id');
 
             // Validate inputs
-            if (!$latitude || !$longitude || !$accuracy || !$deviceId) {
+            if (! $latitude || ! $longitude || ! $accuracy || ! $deviceId) {
                 throw new \Exception('GPS atau Device ID tidak valid. Pastikan izin lokasi sudah aktif.');
             }
 
@@ -103,7 +100,7 @@ class QRController extends Controller
                 // ========================================
                 $today = now()->toDateString();
 
-                $existingAbsensi = \App\Models\Absensi::where('siswa_id', $siswa->id)
+                $existingAbsensi = Absensi::where('siswa_id', $siswa->id)
                     ->where('tanggal', $today)
                     ->where('tipe', 'harian')
                     ->where('device_id', $deviceId)
@@ -171,14 +168,14 @@ class QRController extends Controller
         } catch (\Exception $e) {
             $errorMessage = $e->getMessage();
 
-            Log::warning('Absensi Error: ' . $errorMessage, [
+            Log::warning('Absensi Error: '.$errorMessage, [
                 'siswa_id' => $siswa->id,
             ]);
 
             if ($wantsJsonResponse) {
                 return response()->json([
                     'success' => false,
-                    'message' => $errorMessage
+                    'message' => $errorMessage,
                 ], 422);
             }
 
@@ -193,7 +190,7 @@ class QRController extends Controller
 
     private function resolveSessionFromPayload(?string $payload): ?QRSession
     {
-        if (!$payload) {
+        if (! $payload) {
             return null;
         }
 
@@ -202,7 +199,7 @@ class QRController extends Controller
 
         if ($query) {
             parse_str($query, $params);
-            if (!empty($params['code'])) {
+            if (! empty($params['code'])) {
                 $code = $params['code'];
             }
         }

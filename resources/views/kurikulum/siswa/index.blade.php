@@ -52,7 +52,7 @@
             <p class="mt-2 text-gray-600">Kelola data siswa, akun login, serta import data massal</p>
         </div>
         <a href="{{ route('kurikulum.siswa.create') }}"
-            class="inline-flex items-center gap-2 rounded-lg bg-green-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-green-800">
+            class="inline-flex items-center gap-2 rounded-lg bg-green-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-green-800">
             Tambah Siswa
         </a>
     </div>
@@ -119,7 +119,7 @@
                     class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 file:mr-3 file:rounded-md file:border-0 file:bg-green-50 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-green-700 hover:file:bg-green-100"
                     required>
                 <button type="submit"
-                    class="inline-flex items-center justify-center rounded-lg bg-green-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-800">
+                    class="inline-flex items-center justify-center rounded-lg bg-green-700 px-5 py-2 text-sm font-semibold text-white transition hover:bg-green-800">
                     Import Sekarang
                 </button>
             </form>
@@ -201,8 +201,8 @@
         </div>
         <div class="flex gap-2 md:col-span-3">
             <button type="submit"
-                class="inline-flex items-center justify-center rounded-lg bg-green-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-800">
-                Terapkan Filter
+                    class="inline-flex items-center justify-center rounded-lg bg-green-700 px-5 py-2 text-sm font-semibold text-white transition hover:bg-green-800">
+                    Terapkan Filter
             </button>
             <a href="{{ route('kurikulum.siswa.index') }}"
                 class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50">

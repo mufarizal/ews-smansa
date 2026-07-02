@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 
 class JadwalKegiatan extends Model
@@ -35,7 +36,7 @@ class JadwalKegiatan extends Model
     public function scopeActive($query)
     {
         return $query->where('is_active', true)
-            ->whereHas('semester', fn($q) => $q->where('is_active', true));
+            ->whereHas('semester', fn ($q) => $q->where('is_active', true));
     }
 
     public function scopeForSemester($query, int $semesterId)
@@ -57,14 +58,14 @@ class JadwalKegiatan extends Model
         return self::where('hari', $hari)
             ->where('minggu_ke', $mingguKe)
             ->where('is_active', true)
-            ->whereHas('semester', fn($q) => $q->where('is_active', true))
+            ->whereHas('semester', fn ($q) => $q->where('is_active', true))
             ->first();
     }
 
     /**
      * Ambil semua kegiatan dalam satu semester, diurutkan per hari + minggu_ke
      */
-    public static function forSemesterOrdered(int $semesterId): \Illuminate\Database\Eloquent\Collection
+    public static function forSemesterOrdered(int $semesterId): Collection
     {
         return self::where('semester_id', $semesterId)
             ->orderByRaw("CASE hari
@@ -91,7 +92,7 @@ class JadwalKegiatan extends Model
 
     public function getAttendanceWindowLabel(): string
     {
-        return $this->jam_mulai . ' - ' . $this->jam_selesai;
+        return $this->jam_mulai.' - '.$this->jam_selesai;
     }
 
     /**

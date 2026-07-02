@@ -8,8 +8,11 @@
     @endphp
 
     <div class="mb-6">
-        <a href="{{ route('kurikulum.siswa.index', ['page' => $page ?? 1]) }}" class="text-sm text-gray-600 transition hover:text-gray-900">
-            Kembali ke Manajemen Siswa
+        <a href="{{ route('kurikulum.siswa.index', ['page' => $page ?? 1]) }}" class="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+            Kembali
         </a>
     </div>
 
@@ -113,7 +116,7 @@
 
         <div class="flex flex-wrap items-center gap-3">
             <button type="submit"
-                class="inline-flex items-center gap-2 rounded-lg bg-green-700 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-green-800 hover:shadow-md">
+                class="inline-flex items-center gap-2 rounded-lg bg-green-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-green-800 hover:shadow-md">
                 Simpan Perubahan
             </button>
             <a href="{{ route('kurikulum.siswa.index', ['page' => $page ?? 1]) }}"

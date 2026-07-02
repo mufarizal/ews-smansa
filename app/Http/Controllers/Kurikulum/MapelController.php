@@ -85,6 +85,7 @@ class MapelController extends Controller
     public function destroy(Mapel $mapel)
     {
         $mapel->delete();
+
         return back()->with('success', 'Mata Pelajaran berhasil dihapus.');
     }
 }

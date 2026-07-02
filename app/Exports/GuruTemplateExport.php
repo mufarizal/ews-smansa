@@ -4,13 +4,13 @@ namespace App\Exports;
 
 use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
-use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
+use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class GuruTemplateExport implements FromArray, WithStyles, ShouldAutoSize, WithColumnFormatting
+class GuruTemplateExport implements FromArray, ShouldAutoSize, WithColumnFormatting, WithStyles
 {
     public function array(): array
     {

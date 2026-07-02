@@ -1,6 +1,13 @@
 @extends('layouts.app')
 
 @section('content')
+    <!-- Cek apakah guru bertugas hari ini - untuk validasi di view -->
+    @php
+        $currentGuru = auth()->user()->guru;
+        $todayHari = \App\Models\Jadwal::carbonToHari(now());
+        $isOnDutyToday = $currentGuru ? $currentGuru->isPiketOnDay($todayHari) : false;
+    @endphp
+
     <div class="mx-auto max-w-6xl px-4 py-8">
         <div class="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
@@ -25,6 +32,13 @@
                 @endif
             </div>
         </div>
+
+        @if (session('error'))
+            <div class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                <p class="font-semibold">Error:</p>
+                <p class="mt-1">{{ session('error') }}</p>
+            </div>
+        @endif
 
         @if (session('success'))
             <div
@@ -51,6 +65,22 @@
 
         <div class="grid gap-6 lg:grid-cols-3">
             <div class="lg:col-span-1">
+                @if (!$isOnDutyToday)
+                    <div class="mb-4 rounded-lg border border-orange-200 bg-orange-50 p-4">
+                        <div class="flex items-start gap-3">
+                            <svg class="h-5 w-5 text-orange-600 shrink-0 mt-0.5" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.562 1.732-3L13.732 4c-.77-1.372-2.694-1.372-3.464 0L8.17 16c-.77 1.372.192 3 1.732 3z" />
+                            </svg>
+                            <div>
+                                <p class="text-sm font-semibold text-orange-800">Peringatan</p>
+                                <p class="mt-1 text-xs text-orange-700">Anda tidak memiliki jadwal piket hari ini sehingga tidak dapat membuat sesi absensi baru.</p>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
                 <div class="rounded-lg border border-gray-200 bg-white p-6">
                     <h2 class="mb-4 text-lg font-semibold text-gray-900">Pengaturan Absensi</h2>
 
@@ -58,20 +88,20 @@
                         onsubmit="return beforeSubmitQRForm(event)">
                         @csrf
 
-                        <div class="mb-6">
+                        <div class="mb-6 {{ !$isOnDutyToday ? 'opacity-60' : '' }}">
                             <label class="mb-2 block text-sm font-semibold text-gray-700">Jenis Absensi</label>
                             <div class="flex gap-4 space-y-2">
                                 <label class="flex items-center gap-2">
                                     <input type="radio" name="tipe" value="masuk"
                                         class="cursor-pointer border-gray-300"
                                         {{ request('tipe', 'masuk') == 'masuk' ? 'checked' : '' }}
-                                        onchange="toggleJamMaksimal()">
+                                        onchange="toggleJamMaksimal()" {{ !$isOnDutyToday ? 'disabled' : '' }}>
                                     <span class="text-sm text-gray-700">Masuk (CHECK-IN)</span>
                                 </label>
                                 <label class="flex items-center gap-2">
                                     <input type="radio" name="tipe" value="pulang"
                                         class="cursor-pointer border-gray-300"
-                                        {{ request('tipe') == 'pulang' ? 'checked' : '' }} onchange="toggleJamMaksimal()">
+                                        {{ request('tipe') == 'pulang' ? 'checked' : '' }} onchange="toggleJamMaksimal()" {{ !$isOnDutyToday ? 'disabled' : '' }}>
                                     <span class="text-sm text-gray-700">Pulang (CHECK-OUT)</span>
                                 </label>
                             </div>
@@ -100,11 +130,10 @@
                                 'step' => '300',
                                 'required' => true,
                                 'help' => 'Masuk: Threshold untuk terlambat | Pulang: Jam mulai checkout',
-                                'id' => 'jamBatasInput',
                             ],
                         ])
 
-                        <div class="mb-6" id="jamMaksimalDiv"
+                        <div class="mb-6 {{ !$isOnDutyToday ? 'opacity-60' : '' }}" id="jamMaksimalDiv"
                             style="{{ request('tipe') != 'pulang' ? '' : 'display: none;' }}">
                             @php
                                 $jamMaksimalValue = request('jam_maksimal', '08:00');
@@ -121,7 +150,7 @@
                                     <input type="number" id="jam_maksimal_jam" min="0" max="23" step="1"
                                         value="{{ $jamVal }}"
                                         class="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm font-semibold focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                        onchange="updateJamMaksimalDisplay()" oninput="updateJamMaksimalDisplay()" />
+                                        onchange="updateJamMaksimalDisplay()" oninput="updateJamMaksimalDisplay()" {{ !$isOnDutyToday ? 'disabled' : '' }}>
                                 </div>
 
                                 <div class="mt-5 text-xl font-bold text-gray-400">:</div>
@@ -131,7 +160,7 @@
                                     <input type="number" id="jam_maksimal_menit" min="0" max="59"
                                         step="1" value="{{ $menitVal }}"
                                         class="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm font-semibold focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                        onchange="updateJamMaksimalDisplay()" oninput="updateJamMaksimalDisplay()" />
+                                        onchange="updateJamMaksimalDisplay()" oninput="updateJamMaksimalDisplay()" {{ !$isOnDutyToday ? 'disabled' : '' }}>
                                 </div>
 
                                 <div class="mt-5">
@@ -165,45 +194,18 @@
                         </div>
 
                         <button type="submit"
-                            class="w-full rounded-lg bg-green-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-green-700">
+                            class="w-full rounded-lg bg-green-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-green-700 {{ !$isOnDutyToday ? 'opacity-50 cursor-not-allowed' : '' }}"
+                            {{ !$isOnDutyToday ? 'disabled' : '' }}>
                             Generate QR Code
                         </button>
                     </form>
 
-                    <script>
-                        function beforeSubmitQRForm(event) {
-                            event.preventDefault();
-
-                            const jamBatasJam = document.getElementById('jam_batas_jam');
-                            const jamBatasMenit = document.getElementById('jam_batas_menit');
-                            const jamBatasHidden = document.getElementById('jam_batas');
-
-                            if (jamBatasJam && jamBatasMenit && jamBatasHidden) {
-                                let jam = parseInt(jamBatasJam.value) || 0;
-                                let menit = parseInt(jamBatasMenit.value) || 0;
-                                jam = Math.max(0, Math.min(23, jam));
-                                menit = Math.max(0, Math.min(59, menit));
-                                jamBatasHidden.value = String(jam).padStart(2, '0') + ':' + String(menit).padStart(2, '0');
-                            }
-
-                            const jamMaksimalJam = document.getElementById('jam_maksimal_jam');
-                            const jamMaksimalMenit = document.getElementById('jam_maksimal_menit');
-                            const jamMaksimalHidden = document.getElementById('jam_maksimal');
-
-                            if (jamMaksimalJam && jamMaksimalMenit && jamMaksimalHidden) {
-                                let jam = parseInt(jamMaksimalJam.value) || 0;
-                                let menit = parseInt(jamMaksimalMenit.value) || 0;
-                                jam = Math.max(0, Math.min(23, jam));
-                                menit = Math.max(0, Math.min(59, menit));
-                                jamMaksimalHidden.value = String(jam).padStart(2, '0') + ':' + String(menit).padStart(2, '0');
-                            }
-
-                            event.target.submit();
-                        }
-                    </script>
+                    @if (!$isOnDutyToday)
+                        <p class="mt-2 text-xs text-center text-orange-600">Form dinonaktifkan karena bukan hari piket Anda.</p>
+                    @endif
 
                     <div class="mt-4 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs text-blue-900">
-                        <p class="font-semibold">ℹ️ Tips Penggunaan:</p>
+                        <p class="font-semibold"> Tips Penggunaan:</p>
                         <ul class="mt-1 list-disc space-y-1 pl-4">
                             <li>Set jam mulai sesuai jadwal sekolah</li>
                             <li>Durasi minimal 5 menit, max 24 jam</li>
@@ -212,7 +214,7 @@
                     </div>
 
                     <div class="mt-4 rounded-lg border border-purple-200 bg-purple-50 px-3 py-2.5 text-xs text-purple-900">
-                        <p class="font-semibold">🔄 Tentang Regenerate QR:</p>
+                        <p class="font-semibold">Tentang Regenerate QR:</p>
                         <ul class="mt-1 list-disc space-y-1 pl-4">
                             <li>Boleh di-generate berkali-kali untuk prevent cheating</li>
                             <li>Siswa tetap bisa checkout meski QR berubah</li>
@@ -272,18 +274,18 @@
                             <div class="rounded-lg border border-blue-200 bg-blue-50 p-3">
                                 <p class="text-gray-600">Tanggal</p>
                                 <p class="mt-1 font-semibold text-gray-900">
-                                    {{ Carbon\Carbon::parse(data_get($currentQRSession, 'tanggal'))->format('d M Y') }}</p>
+                                    {{ \Carbon\Carbon::parse(data_get($currentQRSession, 'tanggal'))->format('d M Y') }}</p>
                             </div>
                             <div class="rounded-lg border border-blue-200 bg-blue-50 p-3">
                                 <p class="text-gray-600">QR Di-generate</p>
                                 <p class="mt-1 font-semibold text-gray-900">
-                                    {{ Carbon\Carbon::parse(data_get($currentQRSession, 'generated_at'))->format('H:i') }}
+                                    {{ \Carbon\Carbon::parse(data_get($currentQRSession, 'generated_at'))->format('H:i') }}
                                 </p>
                             </div>
                             <div class="rounded-lg border border-green-200 bg-green-50 p-3">
                                 <p class="text-gray-600">Batas On-Time</p>
                                 <p class="mt-1 font-semibold text-green-700">
-                                    {{ Carbon\Carbon::parse(data_get($currentQRSession, 'jam_batas'))->format('H:i') }}</p>
+                                    {{ \Carbon\Carbon::parse(data_get($currentQRSession, 'jam_batas'))->format('H:i') }}</p>
                             </div>
                             <div class="rounded-lg border border-purple-200 bg-purple-50 p-3">
                                 <p class="text-gray-600">Tipe</p>
@@ -304,25 +306,25 @@
                             <ul class="mt-2 list-disc space-y-1 pl-4">
                                 @if (data_get($currentQRSession, 'tipe') === 'masuk')
                                     <li>QR berlaku jam
-                                        {{ Carbon\Carbon::parse(data_get($currentQRSession, 'jam_batas'))->format('H:i') }}
+                                        {{ \Carbon\Carbon::parse(data_get($currentQRSession, 'jam_batas'))->format('H:i') }}
                                         -
-                                        {{ Carbon\Carbon::parse(data_get($currentQRSession, 'jam_maksimal'))->format('H:i') }}
+                                        {{ \Carbon\Carbon::parse(data_get($currentQRSession, 'jam_maksimal'))->format('H:i') }}
                                     </li>
                                     <li>Siswa yg absen sebelum/saat jam
-                                        <strong>{{ Carbon\Carbon::parse(data_get($currentQRSession, 'jam_batas'))->format('H:i') }}</strong>
+                                        <strong>{{ \Carbon\Carbon::parse(data_get($currentQRSession, 'jam_batas'))->format('H:i') }}</strong>
                                         = <span class="font-semibold text-green-700">✓ HADIR</span>
                                     </li>
                                     <li>Siswa yg absen SETELAH jam
-                                        <strong>{{ Carbon\Carbon::parse(data_get($currentQRSession, 'jam_batas'))->format('H:i') }}</strong>
+                                        <strong>{{ \Carbon\Carbon::parse(data_get($currentQRSession, 'jam_batas'))->format('H:i') }}</strong>
                                         = <span class="font-semibold text-yellow-700">⏱ TERLAMBAT</span>
                                     </li>
                                     <li>Tidak bisa absen SETELAH jam
-                                        <strong>{{ Carbon\Carbon::parse(data_get($currentQRSession, 'jam_maksimal'))->format('H:i') }}</strong>
+                                        <strong>{{ \Carbon\Carbon::parse(data_get($currentQRSession, 'jam_maksimal'))->format('H:i') }}</strong>
                                         (hard deadline)
                                     </li>
                                 @else
                                     <li>QR untuk checkout dimulai jam
-                                        {{ Carbon\Carbon::parse(data_get($currentQRSession, 'jam_batas'))->format('H:i') }}
+                                        {{ \Carbon\Carbon::parse(data_get($currentQRSession, 'jam_batas'))->format('H:i') }}
                                     </li>
                                     <li>Siswa hanya bisa checkout jika sudah check-in terlebih dahulu</li>
                                     <li>Durasi checkout berlaku sampai akhir hari</li>
@@ -338,7 +340,8 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                         </svg>
                         <h3 class="mt-2 text-lg font-medium text-gray-900">Belum ada QR Code</h3>
-                        <p class="mt-1 text-sm text-gray-500">Buat QR code terlebih dahulu dengan mengisi form di sebelah
+                        <p class="mt-1 text-sm text-gray-500">Buat QR code terlebih dahulu dengan mengisi form di
+                            sebelah
                         </p>
                     </div>
                 @endif
@@ -360,6 +363,36 @@
                     break;
                 }
             }
+        }
+
+        function beforeSubmitQRForm(event) {
+            event.preventDefault();
+
+            const jamBatasJam = document.getElementById('jam_batas_jam');
+            const jamBatasMenit = document.getElementById('jam_batas_menit');
+            const jamBatasHidden = document.getElementById('jam_batas');
+
+            if (jamBatasJam && jamBatasMenit && jamBatasHidden) {
+                let jam = parseInt(jamBatasJam.value) || 0;
+                let menit = parseInt(jamBatasMenit.value) || 0;
+                jam = Math.max(0, Math.min(23, jam));
+                menit = Math.max(0, Math.min(59, menit));
+                jamBatasHidden.value = String(jam).padStart(2, '0') + ':' + String(menit).padStart(2, '0');
+            }
+
+            const jamMaksimalJam = document.getElementById('jam_maksimal_jam');
+            const jamMaksimalMenit = document.getElementById('jam_maksimal_menit');
+            const jamMaksimalHidden = document.getElementById('jam_maksimal');
+
+            if (jamMaksimalJam && jamMaksimalMenit && jamMaksimalHidden) {
+                let jam = parseInt(jamMaksimalJam.value) || 0;
+                let menit = parseInt(jamMaksimalMenit.value) || 0;
+                jam = Math.max(0, Math.min(23, jam));
+                menit = Math.max(0, Math.min(59, menit));
+                jamMaksimalHidden.value = String(jam).padStart(2, '0') + ':' + String(menit).padStart(2, '0');
+            }
+
+            event.target.submit();
         }
     </script>
 @endsection
