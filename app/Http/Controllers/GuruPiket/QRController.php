@@ -301,13 +301,7 @@ class QRController extends Controller
      */
     public function history(Request $request)
     {
-        $sessionSearch = trim((string) $request->input('session_search', ''));
-        $selectedSessionId = $request->integer('qr_session_id');
-        $status = $request->input('status', 'semua');
-        $kelasId = $request->input('kelas_id');
-        $search = trim((string) $request->input('search', ''));
-        $selectedHari = $request->input('hari');
-        $selectedTanggal = $request->input('tanggal');
+        $currentGuru = Auth::user()->guru;
 
         // Ambil hari piket guru di semester aktif untuk validasi dan filter.
         $piketDays = [];

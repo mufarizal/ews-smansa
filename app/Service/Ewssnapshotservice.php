@@ -6,6 +6,7 @@ use App\Models\AiRecommendation;
 use App\Models\EarlyWarningResult;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class EwsSnapshotService
 {
@@ -26,6 +27,44 @@ class EwsSnapshotService
             ->where('kelas_id', $kelasId)
             ->where('semester_id', $semesterId)
             ->where('tanggal_hitung', $tanggalTerbaru)
+            ->get();
+    }
+
+    /**
+     * Ambil snapshot terbaru untuk BANYAK kelas dalam 1 query (batching).
+     */
+    public function latestSnapshotPerKelasBatch(array $kelasIds, int $semesterId): Collection
+    {
+        if (empty($kelasIds)) {
+            return collect();
+        }
+
+        $latestDates = EarlyWarningResult::query()
+            ->whereIn('kelas_id', $kelasIds)
+            ->where('semester_id', $semesterId)
+            ->select('kelas_id', DB::raw('MAX(tanggal_hitung) as tanggal_hitung'))
+            ->groupBy('kelas_id')
+            ->get()
+            ->mapWithKeys(fn ($row) => [(int) $row->kelas_id => $row->tanggal_hitung]);
+
+        if ($latestDates->isEmpty()) {
+            return collect();
+        }
+
+        $pairs = $latestDates
+            ->map(fn ($tanggal, $kelasId) => ['kelas_id' => $kelasId, 'tanggal_hitung' => $tanggal])
+            ->values()
+            ->all();
+
+        return EarlyWarningResult::with('siswa')
+            ->where(function ($query) use ($pairs) {
+                foreach ($pairs as $pair) {
+                    $query->orWhere(function ($q) use ($pair) {
+                        $q->where('kelas_id', $pair['kelas_id'])
+                            ->where('tanggal_hitung', $pair['tanggal_hitung']);
+                    });
+                }
+            })
             ->get();
     }
 
@@ -82,6 +121,57 @@ class EwsSnapshotService
             'selisih' => $selisih,
             'skor_sebelumnya' => (float) $sebelumnya->skor_akhir,
         ];
+    }
+
+    /**
+     * Batch trend harian untuk banyak siswa yang SAMA snapshot date.
+     * Menggantikan N panggilan trendHarian() menjadi maksimal 2 query.
+     *
+     * @return Collection<int, array{arah: string, selisih: float, skor_sebelumnya: ?float}>
+     */
+    public function trendHarianBatch(array $siswaIds, int $semesterId, string $tanggalTerbaru): Collection
+    {
+        if (empty($siswaIds)) {
+            return collect();
+        }
+
+        $currentRecords = EarlyWarningResult::whereIn('siswa_id', $siswaIds)
+            ->where('semester_id', $semesterId)
+            ->where('tanggal_hitung', $tanggalTerbaru)
+            ->get()
+            ->keyBy('siswa_id');
+
+        $previousRecords = EarlyWarningResult::whereIn('siswa_id', $siswaIds)
+            ->where('semester_id', $semesterId)
+            ->where('tanggal_hitung', '<', $tanggalTerbaru)
+            ->orderByDesc('tanggal_hitung')
+            ->get()
+            ->groupBy('siswa_id')
+            ->map(fn ($group) => $group->first())
+            ->keyBy('siswa_id');
+
+        return $currentRecords->map(function ($current) use ($previousRecords) {
+            $sebelumnya = $previousRecords->get($current->siswa_id);
+
+            if (!$sebelumnya) {
+                return ['arah' => 'baru', 'selisih' => 0.0, 'skor_sebelumnya' => null];
+            }
+
+            $selisih = round((float) $current->skor_akhir - (float) $sebelumnya->skor_akhir, 4);
+
+            $arah = 'tetap';
+            if ($selisih > 0) {
+                $arah = 'naik';
+            } elseif ($selisih < 0) {
+                $arah = 'turun';
+            }
+
+            return [
+                'arah' => $arah,
+                'selisih' => $selisih,
+                'skor_sebelumnya' => (float) $sebelumnya->skor_akhir,
+            ];
+        });
     }
 
     /**

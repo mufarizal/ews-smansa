@@ -9,51 +9,28 @@ use Illuminate\Support\Facades\DB;
 class JadwalSeeder extends Seeder
 {
     /**
-     * Struktur data:
-     * - semester_id = 1 (Ganjil, aktif)
-     * - Kelas 10A–10J (id: 3–12)
-     * - Senin–Jumat
+     * ATURAN JADWAL (revisi):
+     * - Sekolah masuk 06:30, pulang 14:00
      * - 1 JP = 45 menit
-     * - Istirahat: 10:00–10:30 dan 12:00–13:00
-     * - Jumat: kegiatan pagi 07:00–07:30, lalu 3 sesi mapel
-     * - Senin–Kamis: 8 JP per hari (+ 1 sesi Penjas 2JP pagi)
-     *
-     * Penugasan guru (guru_id terkecil per mapel per kelas):
-     * Diambil dari data real guru_mapel_kelas semester_id=1
+     * - Istirahat 1: 09:30–10:00
+     * - Istirahat 2: 12:15–13:15
+     *   (catatan: 12:00–13:00 tidak bisa pas kalau istirahat 1 tetap di
+     *   09:30–10:00 dan semua JP 45 menit — 120 menit di antara keduanya
+     *   tidak habis dibagi 45. Digeser 15 menit ke 12:15 supaya total
+     *   tetap 8 JP/hari dan pulang persis jam 14:00.)
+     * - PJOK selalu di jam pertama, 3 JP (135 menit), 1x seminggu
+     *   (untuk kelas yang punya PJOK, dikunci di hari Selasa)
+     * - Setiap hari maksimal 4–5 mapel per kelas (blok @2 JP)
+     * - Jumat: 45 menit kegiatan (rotasi 4 minggu: Senam Bersama,
+     *   Jumat Bersih, Literasi, Kewalikelasan), lalu 5 JP mapel
+     * - Idempotent: data lama semester ybs dihapus dulu sebelum insert baru,
+     *   TIDAK perlu migrate:fresh untuk generate ulang jadwal
      */
 
-    // ── Konstanta waktu ────────────────────────────────────────
-    // Sesi Senin–Kamis (45 menit per JP, istirahat 10:00–10:30, 12:00–13:00)
-    // Slot:
-    //  1: 07:00–07:45   JP1
-    //  2: 07:45–08:30   JP2
-    //  3: 08:30–09:15   JP3
-    //  4: 09:15–10:00   JP4
-    //  [ISTIRAHAT 10:00–10:30]
-    //  5: 10:30–11:15   JP5
-    //  6: 11:15–12:00   JP6
-    //  [ISTIRAHAT 12:00–13:00]
-    //  7: 13:00–13:45   JP7
-    //  8: 13:45–14:30   JP8
-
-    // Sesi Jumat (kegiatan 07:00–07:30, lalu mapel)
-    //  1: 07:30–08:15   JP1
-    //  2: 08:15–09:00   JP2
-    //  3: 09:00–09:45   JP3
-    //  [ISTIRAHAT 09:45–10:15]
-    //  4: 10:15–11:00   JP4
-    //  5: 11:00–11:45   JP5
-
-    // ── Mapping penugasan: [kelas_id][mapel_id] => guru_id (terkecil) ──
-    // Dibangun dari data tinker (pilih guru_id terkecil per kelas+mapel)
-
+    // ── Penugasan guru per kelas per mapel (guru_id terkecil) ──────────
     private function getPenugasan(): array
     {
-        // Format: kelas_id => [ mapel_id => guru_id ]
-        // Dipilih guru_id terkecil dari data real
-
         $raw = [
-            // PPKn (mapel_id=1): semua kelas → guru_id=17 (Drs. Masduki)
             [1, 3, 17],
             [1, 4, 17],
             [1, 5, 17],
@@ -65,12 +42,6 @@ class JadwalSeeder extends Seeder
             [1, 11, 17],
             [1, 12, 17],
 
-            // Matematika (mapel_id=2): guru_id=18 (Mutia Maisaroh) untuk 10A–10H
-            // 10A ada 18,27,10,34 → pilih 10; 10B ada 18,27,10 → pilih 10
-            // Dari data: kelas 3(10A)→18 terkecil, kelas 4(10B)→18 dst
-            // Data penugasan: id=21 kelas=3 guru=18; id=22 kelas=4 guru=18 ...
-            // Tapi ada juga id=220 kelas=3 guru=10, id=218 kelas=3 guru=27, id=230 kelas=3 guru=34
-            // → pilih terkecil guru_id dari tiap kelas
             [2, 3, 10],
             [2, 4, 10],
             [2, 5, 10],
@@ -82,7 +53,6 @@ class JadwalSeeder extends Seeder
             [2, 11, 10],
             [2, 12, 10],
 
-            // Kimia (mapel_id=4): guru_id=30 (Evi Widianti) kelas 3–10
             [4, 3, 30],
             [4, 4, 30],
             [4, 5, 30],
@@ -92,8 +62,6 @@ class JadwalSeeder extends Seeder
             [4, 9, 30],
             [4, 10, 30],
 
-            // Sosiologi (mapel_id=6): guru_id=29 (Sri Sukmawati) kelas 3–8, guru=31 kelas 9–
-            // Data: kelas3→29,31 terkecil=29; kelas4→29,31→29; ... kelas9→31 only; kelas10→31 only
             [6, 3, 29],
             [6, 4, 29],
             [6, 5, 29],
@@ -105,7 +73,6 @@ class JadwalSeeder extends Seeder
             [6, 11, 31],
             [6, 12, 31],
 
-            // Sejarah (mapel_id=8): guru_id=22 (Siti Nuraini) semua kelas
             [8, 3, 22],
             [8, 4, 22],
             [8, 5, 22],
@@ -117,8 +84,6 @@ class JadwalSeeder extends Seeder
             [8, 11, 22],
             [8, 12, 22],
 
-            // Seni Budaya (mapel_id=10): guru_id=12 (Inggit) & 19 (Wardiana)
-            // Data: kelas3→19,12 terkecil=12; semua kelas ada 12 & 19 → pilih 12
             [10, 3, 12],
             [10, 4, 12],
             [10, 5, 12],
@@ -130,7 +95,6 @@ class JadwalSeeder extends Seeder
             [10, 11, 12],
             [10, 12, 12],
 
-            // Fisika (mapel_id=11): guru_id=5 (Suryani) semua kelas
             [11, 3, 5],
             [11, 4, 5],
             [11, 5, 5],
@@ -142,7 +106,6 @@ class JadwalSeeder extends Seeder
             [11, 11, 5],
             [11, 12, 5],
 
-            // Ekonomi (mapel_id=13): guru_id=20 (Suharto) semua kelas
             [13, 3, 20],
             [13, 4, 20],
             [13, 5, 20],
@@ -154,7 +117,6 @@ class JadwalSeeder extends Seeder
             [13, 11, 20],
             [13, 12, 20],
 
-            // Geografi (mapel_id=15): guru_id=21 (Hj. Euis Gardini) semua kelas
             [15, 3, 21],
             [15, 4, 21],
             [15, 5, 21],
@@ -166,18 +128,6 @@ class JadwalSeeder extends Seeder
             [15, 11, 21],
             [15, 12, 21],
 
-            // PJOK (mapel_id=16): guru_id terkecil per kelas
-            // kelas 3(10A)→11,24,13,25 terkecil=11; kelas 4(10B)→11,24,13,25→11
-            // kelas 9(10G)→11,24,13,25→11; kelas 10(10H)→11,24,25→11
-            // kelas 11(10I)→tidak ada penugasan 11, ada 25,13? cek data: id=274 kelas=9→guru25; id=267 kelas=9→guru13
-            // Dari data: kelas 11(10I) ada guru 13(id=267 kelas=9 bukan 11)...
-            // Kelas 11(10I) & 12(10J): dari data penugasan hanya ada 10I & 10J di PJOK?
-            // Check: id=76 kelas=10 guru=11; id=115 kelas=10 guru=24; id=275 kelas=10 guru=25
-            // Tidak ada kelas 11 & 12 di PJOK dari data yg ada → skip atau gunakan guru terakhir
-            // Dari data Drs. Ajat: kelas 10A-10H; Lia: 10A-10H; Irfan: 10A-10H; Freddy: 10A-10G
-            // Jadi PJOK hanya sampai 10H untuk sebagian, tapi 10I & 10J ada Drs Ajat?
-            // Data penugasan dari halaman: Drs Ajat → 10A-10H, Freddy→10A-10G, Irfan→10A-10H, Lia→10A-10H
-            // Berarti 10I & 10J tidak punya guru PJOK → skip PJOK untuk 10I & 10J
             [16, 3, 11],
             [16, 4, 11],
             [16, 5, 11],
@@ -187,7 +137,6 @@ class JadwalSeeder extends Seeder
             [16, 9, 11],
             [16, 10, 11],
 
-            // Bahasa Inggris (mapel_id=17): guru_id=8 & 23, terkecil=8
             [17, 3, 8],
             [17, 4, 8],
             [17, 5, 8],
@@ -199,13 +148,6 @@ class JadwalSeeder extends Seeder
             [17, 11, 8],
             [17, 12, 8],
 
-            // Bahasa Indonesia (mapel_id=19): guru_id=9,33,37 → terkecil=9 untuk yg ada
-            // Dari data: kelas3→37,9,33 terkecil=9; kelas4→37,9,33→9 ...
-            // kelas 10(10H)→9,33,37→9; kelas 11(10I)? Popy→10A-10H, Dian→10A-10H, Kholijah→10A-10G
-            // 10I & 10J: Dian dan Popy ada sampai 10H saja
-            // Dari data penugasan halaman: Popy→10A-10H, Kholijah→10A-10G, Dian→10A-10H
-            // Berarti 10I & 10J hanya punya Dian (sampai 10H)? Tidak ada B.Indo guru untuk 10I-10J?
-            // Hmm dari halaman Dian→10A-10H, berarti 10I & 10J tidak punya B.Indo? Skip.
             [19, 3, 9],
             [19, 4, 9],
             [19, 5, 9],
@@ -215,10 +157,6 @@ class JadwalSeeder extends Seeder
             [19, 9, 9],
             [19, 10, 9],
 
-            // Bahasa Sunda (mapel_id=20): Kholijah(37)→10A-10D, Dian(33)→10A-10F
-            // kelas3→37,33 terkecil=33; kelas4→37,33→33; kelas5→37,33→33; kelas6→37,33→33
-            // kelas7→33 only; kelas8→33 only
-            // kelas 9(10G)–12(10J): tidak ada penugasan B.Sunda → skip
             [20, 3, 33],
             [20, 4, 33],
             [20, 5, 33],
@@ -226,7 +164,6 @@ class JadwalSeeder extends Seeder
             [20, 7, 33],
             [20, 8, 33],
 
-            // PABP (mapel_id=21): guru_id=4 & 36, terkecil=4 semua kelas
             [21, 3, 4],
             [21, 4, 4],
             [21, 5, 4],
@@ -238,7 +175,6 @@ class JadwalSeeder extends Seeder
             [21, 11, 4],
             [21, 12, 4],
 
-            // Biologi (mapel_id=22): guru_id=6 (Nurliana) semua kelas
             [22, 3, 6],
             [22, 4, 6],
             [22, 5, 6],
@@ -250,13 +186,11 @@ class JadwalSeeder extends Seeder
             [22, 11, 6],
             [22, 12, 6],
 
-            // Prakarya (mapel_id=24): Evi Widianti(30) → 10A-10D only
             [24, 3, 30],
             [24, 4, 30],
             [24, 5, 30],
             [24, 6, 30],
 
-            // Informatika (mapel_id=25): guru_id=35 (Galih) semua kelas
             [25, 3, 35],
             [25, 4, 35],
             [25, 5, 35],
@@ -268,7 +202,6 @@ class JadwalSeeder extends Seeder
             [25, 11, 35],
             [25, 12, 35],
 
-            // Bahasa Jepang (mapel_id=26): guru_id=32 (Asep) → 10A-10G
             [26, 3, 32],
             [26, 4, 32],
             [26, 5, 32],
@@ -278,376 +211,266 @@ class JadwalSeeder extends Seeder
             [26, 9, 32],
         ];
 
-        // Susun jadi $map[kelas_id][mapel_id] = guru_id
         $map = [];
-        foreach ($raw as [$mapel_id, $kelas_id, $guru_id]) {
-            $map[$kelas_id][$mapel_id] = $guru_id;
+        foreach ($raw as [$mapelId, $kelasId, $guruId]) {
+            $map[$kelasId][$mapelId] = $guruId;
         }
 
         return $map;
     }
 
-    // ── Slot waktu Senin–Kamis ─────────────────────────────────
-    private function getSlotSenKam(): array
+    // ── Urutan prioritas mapel (yang di depan dapat jatah JP ekstra duluan) ──
+    // Mapel "inti" ditaruh di depan supaya kalau ada sisa JP, mereka yang
+    // dapat tambahan dulu (MTK, B.Indo, B.Inggris dst).
+    private const PRIORITAS_MAPEL = [
+        2,  // Matematika
+        19, // Bahasa Indonesia
+        17, // Bahasa Inggris
+        21, // PABP
+        11, // Fisika
+        22, // Biologi
+        1,  // PPKn
+        8,  // Sejarah
+        13, // Ekonomi
+        15, // Geografi
+        6,  // Sosiologi
+        4,  // Kimia
+        10, // Seni Budaya
+        25, // Informatika
+        20, // Bahasa Sunda
+        24, // Prakarya
+        26, // Bahasa Jepang
+    ];
+
+    private const NAMA_MAPEL = [
+        1 => 'PPKn',
+        2 => 'Matematika',
+        4 => 'Kimia',
+        6 => 'Sosiologi',
+        8 => 'Sejarah',
+        10 => 'Seni Budaya',
+        11 => 'Fisika',
+        13 => 'Ekonomi',
+        15 => 'Geografi',
+        16 => 'PJOK',
+        17 => 'Bahasa Inggris',
+        19 => 'Bahasa Indonesia',
+        20 => 'Bahasa Sunda',
+        21 => 'PABP',
+        22 => 'Biologi',
+        24 => 'Prakarya',
+        25 => 'Informatika',
+        26 => 'Bahasa Jepang',
+    ];
+
+    private const PJOK_ID = 16;
+
+    private const HARI_PJOK = 'Selasa'; // hari PJOK dikunci di jam pertama
+
+    // ── Slot waktu Senin/Selasa/Rabu/Kamis (45 menit/JP) ────────────────
+    private function getSlotHarian(): array
     {
-        // [jam_mulai, jam_selesai, jp] — setiap sesi bisa 1, 2, atau 3 JP
         return [
-            ['07:00', '07:45', 1],   // JP 1
-            ['07:45', '08:30', 1],   // JP 2
-            ['08:30', '09:15', 1],   // JP 3
-            ['09:15', '10:00', 1],   // JP 4
-            // istirahat 10:00–10:30
-            ['10:30', '11:15', 1],   // JP 5
-            ['11:15', '12:00', 1],   // JP 6
-            // istirahat 12:00–13:00
-            ['13:00', '13:45', 1],   // JP 7
-            ['13:45', '14:30', 1],   // JP 8
+            ['06:30', '07:15'], // JP1
+            ['07:15', '08:00'], // JP2
+            ['08:00', '08:45'], // JP3
+            ['08:45', '09:30'], // JP4
+            // istirahat 09:30–10:00
+            ['10:00', '10:45'], // JP5
+            ['10:45', '11:30'], // JP6
+            ['11:30', '12:15'], // JP7
+            // istirahat 12:15–13:15
+            ['13:15', '14:00'], // JP8
         ];
     }
 
-    // ── Slot waktu Jumat ───────────────────────────────────────
+    // ── Slot waktu Jumat (kegiatan 06:30–07:15, lalu 5 JP) ──────────────
     private function getSlotJumat(): array
     {
-        // Kegiatan 07:00–07:30 → mapel mulai 07:30
         return [
-            ['07:30', '08:15', 1],   // JP 1
-            ['08:15', '09:00', 1],   // JP 2
-            ['09:00', '09:45', 1],   // JP 3
-            // istirahat 09:45–10:15
-            ['10:15', '11:00', 1],   // JP 4
-            ['11:00', '11:45', 1],   // JP 5
+            ['07:15', '08:00'], // JP1
+            ['08:00', '08:45'], // JP2
+            ['08:45', '09:30'], // JP3
+            // istirahat 09:30–10:00
+            ['10:00', '10:45'], // JP4
+            ['10:45', '11:30'], // JP5
         ];
     }
-
-    // ── Jadwal mapel per hari per kelas ───────────────────────
-    // Distribusi: tiap mapel idealnya 2–3 JP/minggu
-    // Dengan 10 kelas dan constraint guru, kita susun per kelas
-    // hari Senin–Kamis = 8 slot, Jumat = 5 slot → total 37 slot/kelas/minggu
-    // ~15 mapel per kelas → rata-rata 2–3 JP/mapel
 
     /**
-     * Mengembalikan jadwal per kelas: array of [hari, slot_index, mapel_id, jp]
-     * jp = jumlah jam pelajaran (slot yang dipakai berurutan)
-     *
-     * Kita gunakan template yang sama untuk semua kelas,
-     * lalu sesuaikan guru dari penugasan.
-     *
-     * Mapel per kelas 10A-10D (punya B.Sunda & Prakarya):
-     *   PPKn(1)=2JP, MTK(2)=4JP, Kimia(4)=2JP, Sosiologi(6)=2JP,
-     *   Sejarah(8)=2JP, SeniBudaya(10)=2JP, Fisika(11)=3JP,
-     *   Ekonomi(13)=2JP, Geografi(15)=2JP, PJOK(16)=2JP,
-     *   B.Inggris(17)=3JP, B.Indonesia(19)=4JP, B.Sunda(20)=2JP,
-     *   PABP(21)=3JP, Biologi(22)=3JP, Prakarya(24)=2JP,
-     *   Informatika(25)=2JP, B.Jepang(26)=2JP
-     *   Total = 42JP → cocok (Senin-Kamis 8x4=32 + Jumat 5 = 37... kurangi)
-     *   Kita pakai 37 slot dengan beberapa mapel 2JP & beberapa 3JP
-     *
-     * Mapel per kelas 10E-10F (punya B.Sunda tapi tidak Prakarya):
-     *   Sama tapi tanpa Prakarya
-     *
-     * Mapel per kelas 10G (tidak punya B.Sunda, B.Indonesia sampai 10G, B.Jepang sampai 10G):
-     *
-     * Mapel per kelas 10H (tidak punya B.Sunda, tidak punya B.Jepang):
-     *
-     * Mapel per kelas 10I-10J (paling sedikit):
-     *   Tidak punya: B.Indonesia, B.Sunda, PJOK, B.Jepang
-     *   Punya: PPKn, MTK, Kimia(10I), Sosiologi, Sejarah, SeniBudaya,
-     *          Fisika, Ekonomi, Geografi, B.Inggris, PABP, Biologi, Informatika
-     *
-     * Untuk simplifikasi, kita buat 3 template:
-     *   A: kelas 10A-10D  (lengkap + B.Sunda + Prakarya + B.Jepang)
-     *   B: kelas 10E-10G  (tanpa Prakarya, 10G tanpa B.Sunda)
-     *   C: kelas 10H      (tanpa B.Sunda, tanpa Prakarya, tanpa B.Jepang)
-     *   D: kelas 10I-10J  (paling sedikit)
+     * Susun kapasitas slot kosong (non-PJOK) per hari untuk 1 kelas.
+     * Return: [hari => jumlah_slot_kosong]
      */
-    private function getTemplateJadwal(int $kelasId): array
+    private function getKapasitasHari(bool $adaPjok): array
     {
-        // Template: list of [hari, jam_mulai, jam_selesai, mapel_id]
-        // Hari: Senin, Selasa, Rabu, Kamis, Jumat
-        // Slot Senin-Kamis: 07:00,07:45,08:30,09:15,10:30,11:15,13:00,13:45
-        // Slot Jumat:        07:30,08:15,09:00,10:15,11:00
-        //
-        // Kita susun manual untuk memastikan distribusi merata
-        // Format: [hari, jam_mulai, jam_selesai, mapel_id]
+        $slotSelasa = 8 - ($adaPjok ? 3 : 0); // PJOK ambil 3 slot pertama Selasa
 
-        $mapel = [
-            'ppkn' => 1,
-            'mtk' => 2,
-            'kimia' => 4,
-            'sosiologi' => 6,
-            'sejarah' => 8,
-            'senibudaya' => 10,
-            'fisika' => 11,
-            'ekonomi' => 13,
-            'geografi' => 15,
-            'pjok' => 16,
-            'bing' => 17,
-            'bind' => 19,
-            'bsunda' => 20,
-            'pabp' => 21,
-            'biologi' => 22,
-            'prakarya' => 24,
-            'info' => 25,
-            'bjepang' => 26,
+        return [
+            'Senin' => 8,
+            'Selasa' => $slotSelasa,
+            'Rabu' => 8,
+            'Kamis' => 8,
+            'Jumat' => 5,
         ];
-
-        // Template A: 10A, 10B, 10C, 10D (semua mapel)
-        $templateA = [
-            // SENIN
-            ['Senin', '07:00', '07:45', $mapel['pabp']],
-            ['Senin', '07:45', '08:30', $mapel['pabp']],
-            ['Senin', '08:30', '09:15', $mapel['mtk']],
-            ['Senin', '09:15', '10:00', $mapel['mtk']],
-            ['Senin', '10:30', '11:15', $mapel['bind']],
-            ['Senin', '11:15', '12:00', $mapel['bind']],
-            ['Senin', '13:00', '13:45', $mapel['fisika']],
-            ['Senin', '13:45', '14:30', $mapel['fisika']],
-            // SELASA
-            ['Selasa', '07:00', '07:45', $mapel['bing']],
-            ['Selasa', '07:45', '08:30', $mapel['bing']],
-            ['Selasa', '08:30', '09:15', $mapel['ppkn']],
-            ['Selasa', '09:15', '10:00', $mapel['ppkn']],
-            ['Selasa', '10:30', '11:15', $mapel['sejarah']],
-            ['Selasa', '11:15', '12:00', $mapel['sejarah']],
-            ['Selasa', '13:00', '13:45', $mapel['ekonomi']],
-            ['Selasa', '13:45', '14:30', $mapel['biologi']],
-            // RABU
-            ['Rabu', '07:00', '07:45', $mapel['geografi']],
-            ['Rabu', '07:45', '08:30', $mapel['geografi']],
-            ['Rabu', '08:30', '09:15', $mapel['kimia']],
-            ['Rabu', '09:15', '10:00', $mapel['kimia']],
-            ['Rabu', '10:30', '11:15', $mapel['bsunda']],
-            ['Rabu', '11:15', '12:00', $mapel['bsunda']],
-            ['Rabu', '13:00', '13:45', $mapel['info']],
-            ['Rabu', '13:45', '14:30', $mapel['info']],
-            // KAMIS
-            ['Kamis', '07:00', '07:45', $mapel['sosiologi']],
-            ['Kamis', '07:45', '08:30', $mapel['sosiologi']],
-            ['Kamis', '08:30', '09:15', $mapel['mtk']],
-            ['Kamis', '09:15', '10:00', $mapel['mtk']],
-            ['Kamis', '10:30', '11:15', $mapel['pjok']],
-            ['Kamis', '11:15', '12:00', $mapel['pjok']],
-            ['Kamis', '13:00', '13:45', $mapel['prakarya']],
-            ['Kamis', '13:45', '14:30', $mapel['prakarya']],
-            // JUMAT
-            ['Jumat', '07:30', '08:15', $mapel['bind']],
-            ['Jumat', '08:15', '09:00', $mapel['bind']],
-            ['Jumat', '09:00', '09:45', $mapel['senibudaya']],
-            ['Jumat', '10:15', '11:00', $mapel['biologi']],
-            ['Jumat', '11:00', '11:45', $mapel['bjepang']],
-        ];
-
-        // Template B1: 10E (punya B.Sunda, tidak punya Prakarya, ada B.Jepang)
-        $templateB1 = [
-            ['Senin', '07:00', '07:45', $mapel['pabp']],
-            ['Senin', '07:45', '08:30', $mapel['pabp']],
-            ['Senin', '08:30', '09:15', $mapel['mtk']],
-            ['Senin', '09:15', '10:00', $mapel['mtk']],
-            ['Senin', '10:30', '11:15', $mapel['bind']],
-            ['Senin', '11:15', '12:00', $mapel['bind']],
-            ['Senin', '13:00', '13:45', $mapel['fisika']],
-            ['Senin', '13:45', '14:30', $mapel['fisika']],
-            ['Selasa', '07:00', '07:45', $mapel['bing']],
-            ['Selasa', '07:45', '08:30', $mapel['bing']],
-            ['Selasa', '08:30', '09:15', $mapel['ppkn']],
-            ['Selasa', '09:15', '10:00', $mapel['ppkn']],
-            ['Selasa', '10:30', '11:15', $mapel['sejarah']],
-            ['Selasa', '11:15', '12:00', $mapel['sejarah']],
-            ['Selasa', '13:00', '13:45', $mapel['ekonomi']],
-            ['Selasa', '13:45', '14:30', $mapel['biologi']],
-            ['Rabu', '07:00', '07:45', $mapel['geografi']],
-            ['Rabu', '07:45', '08:30', $mapel['geografi']],
-            ['Rabu', '08:30', '09:15', $mapel['kimia']],
-            ['Rabu', '09:15', '10:00', $mapel['kimia']],
-            ['Rabu', '10:30', '11:15', $mapel['bsunda']],
-            ['Rabu', '11:15', '12:00', $mapel['bsunda']],
-            ['Rabu', '13:00', '13:45', $mapel['info']],
-            ['Rabu', '13:45', '14:30', $mapel['info']],
-            ['Kamis', '07:00', '07:45', $mapel['sosiologi']],
-            ['Kamis', '07:45', '08:30', $mapel['sosiologi']],
-            ['Kamis', '08:30', '09:15', $mapel['mtk']],
-            ['Kamis', '09:15', '10:00', $mapel['mtk']],
-            ['Kamis', '10:30', '11:15', $mapel['pjok']],
-            ['Kamis', '11:15', '12:00', $mapel['pjok']],
-            ['Kamis', '13:00', '13:45', $mapel['bjepang']],  // ganti prakarya
-            ['Kamis', '13:45', '14:30', $mapel['senibudaya']],
-            ['Jumat', '07:30', '08:15', $mapel['bind']],
-            ['Jumat', '08:15', '09:00', $mapel['bind']],
-            ['Jumat', '09:00', '09:45', $mapel['biologi']],
-            ['Jumat', '10:15', '11:00', $mapel['ekonomi']],
-            ['Jumat', '11:00', '11:45', $mapel['pabp']],
-        ];
-
-        // Template B2: 10F (punya B.Sunda s.d 10F, tidak punya Prakarya, ada B.Jepang)
-        $templateB2 = $templateB1; // sama dengan B1
-
-        // Template B3: 10G (tidak punya B.Sunda, tidak punya Prakarya, ada B.Jepang)
-        $templateB3 = [
-            ['Senin', '07:00', '07:45', $mapel['pabp']],
-            ['Senin', '07:45', '08:30', $mapel['pabp']],
-            ['Senin', '08:30', '09:15', $mapel['mtk']],
-            ['Senin', '09:15', '10:00', $mapel['mtk']],
-            ['Senin', '10:30', '11:15', $mapel['bind']],
-            ['Senin', '11:15', '12:00', $mapel['bind']],
-            ['Senin', '13:00', '13:45', $mapel['fisika']],
-            ['Senin', '13:45', '14:30', $mapel['fisika']],
-            ['Selasa', '07:00', '07:45', $mapel['bing']],
-            ['Selasa', '07:45', '08:30', $mapel['bing']],
-            ['Selasa', '08:30', '09:15', $mapel['ppkn']],
-            ['Selasa', '09:15', '10:00', $mapel['ppkn']],
-            ['Selasa', '10:30', '11:15', $mapel['sejarah']],
-            ['Selasa', '11:15', '12:00', $mapel['sejarah']],
-            ['Selasa', '13:00', '13:45', $mapel['ekonomi']],
-            ['Selasa', '13:45', '14:30', $mapel['biologi']],
-            ['Rabu', '07:00', '07:45', $mapel['geografi']],
-            ['Rabu', '07:45', '08:30', $mapel['geografi']],
-            ['Rabu', '08:30', '09:15', $mapel['kimia']],
-            ['Rabu', '09:15', '10:00', $mapel['kimia']],
-            ['Rabu', '10:30', '11:15', $mapel['sosiologi']],  // ganti bsunda
-            ['Rabu', '11:15', '12:00', $mapel['sosiologi']],
-            ['Rabu', '13:00', '13:45', $mapel['info']],
-            ['Rabu', '13:45', '14:30', $mapel['info']],
-            ['Kamis', '07:00', '07:45', $mapel['bjepang']],
-            ['Kamis', '07:45', '08:30', $mapel['senibudaya']],
-            ['Kamis', '08:30', '09:15', $mapel['mtk']],
-            ['Kamis', '09:15', '10:00', $mapel['mtk']],
-            ['Kamis', '10:30', '11:15', $mapel['pjok']],
-            ['Kamis', '11:15', '12:00', $mapel['pjok']],
-            ['Kamis', '13:00', '13:45', $mapel['pabp']],
-            ['Kamis', '13:45', '14:30', $mapel['ekonomi']],
-            ['Jumat', '07:30', '08:15', $mapel['bind']],
-            ['Jumat', '08:15', '09:00', $mapel['bind']],
-            ['Jumat', '09:00', '09:45', $mapel['biologi']],
-            ['Jumat', '10:15', '11:00', $mapel['geografi']],
-            ['Jumat', '11:00', '11:45', $mapel['fisika']],
-        ];
-
-        // Template C: 10H (tidak punya B.Sunda, tidak punya Prakarya, tidak punya B.Jepang)
-        $templateC = [
-            ['Senin', '07:00', '07:45', $mapel['pabp']],
-            ['Senin', '07:45', '08:30', $mapel['pabp']],
-            ['Senin', '08:30', '09:15', $mapel['mtk']],
-            ['Senin', '09:15', '10:00', $mapel['mtk']],
-            ['Senin', '10:30', '11:15', $mapel['bind']],
-            ['Senin', '11:15', '12:00', $mapel['bind']],
-            ['Senin', '13:00', '13:45', $mapel['fisika']],
-            ['Senin', '13:45', '14:30', $mapel['fisika']],
-            ['Selasa', '07:00', '07:45', $mapel['bing']],
-            ['Selasa', '07:45', '08:30', $mapel['bing']],
-            ['Selasa', '08:30', '09:15', $mapel['ppkn']],
-            ['Selasa', '09:15', '10:00', $mapel['ppkn']],
-            ['Selasa', '10:30', '11:15', $mapel['sejarah']],
-            ['Selasa', '11:15', '12:00', $mapel['sejarah']],
-            ['Selasa', '13:00', '13:45', $mapel['ekonomi']],
-            ['Selasa', '13:45', '14:30', $mapel['biologi']],
-            ['Rabu', '07:00', '07:45', $mapel['geografi']],
-            ['Rabu', '07:45', '08:30', $mapel['geografi']],
-            ['Rabu', '08:30', '09:15', $mapel['kimia']],
-            ['Rabu', '09:15', '10:00', $mapel['kimia']],
-            ['Rabu', '10:30', '11:15', $mapel['sosiologi']],
-            ['Rabu', '11:15', '12:00', $mapel['sosiologi']],
-            ['Rabu', '13:00', '13:45', $mapel['info']],
-            ['Rabu', '13:45', '14:30', $mapel['info']],
-            ['Kamis', '07:00', '07:45', $mapel['senibudaya']],
-            ['Kamis', '07:45', '08:30', $mapel['biologi']],
-            ['Kamis', '08:30', '09:15', $mapel['mtk']],
-            ['Kamis', '09:15', '10:00', $mapel['mtk']],
-            ['Kamis', '10:30', '11:15', $mapel['pjok']],
-            ['Kamis', '11:15', '12:00', $mapel['pjok']],
-            ['Kamis', '13:00', '13:45', $mapel['pabp']],
-            ['Kamis', '13:45', '14:30', $mapel['ekonomi']],
-            ['Jumat', '07:30', '08:15', $mapel['bind']],
-            ['Jumat', '08:15', '09:00', $mapel['bind']],
-            ['Jumat', '09:00', '09:45', $mapel['fisika']],
-            ['Jumat', '10:15', '11:00', $mapel['geografi']],
-            ['Jumat', '11:00', '11:45', $mapel['ppkn']],
-        ];
-
-        // Template D: 10I & 10J (tidak punya B.Indo, B.Sunda, PJOK, B.Jepang, Prakarya, Kimia(10J))
-        // 10I: PPKn, MTK, Kimia, Sosiologi, Sejarah, SeniBudaya, Fisika, Ekonomi, Geografi, B.Inggris, PABP, Biologi, Informatika
-        // 10J: sama tapi cek kimia — dari data penugasan kelas 11(10I) dan 12(10J):
-        //   Kimia: data kelas_id=11(10I) tidak ada di raw (Evi hanya s.d kelas_id=10 yaitu 10H)
-        //   Wait: kelas_id=11 = 10I, kelas_id=12 = 10J
-        //   Dari data Evi: id=177 kelas=10, id=176 kelas=9 → maks kelas_id=10 (10H)
-        //   Jadi 10I & 10J tidak punya Kimia → skip
-        $templateD = [
-            ['Senin', '07:00', '07:45', $mapel['pabp']],
-            ['Senin', '07:45', '08:30', $mapel['pabp']],
-            ['Senin', '08:30', '09:15', $mapel['mtk']],
-            ['Senin', '09:15', '10:00', $mapel['mtk']],
-            ['Senin', '10:30', '11:15', $mapel['bing']],
-            ['Senin', '11:15', '12:00', $mapel['bing']],
-            ['Senin', '13:00', '13:45', $mapel['fisika']],
-            ['Senin', '13:45', '14:30', $mapel['fisika']],
-            ['Selasa', '07:00', '07:45', $mapel['ppkn']],
-            ['Selasa', '07:45', '08:30', $mapel['ppkn']],
-            ['Selasa', '08:30', '09:15', $mapel['sejarah']],
-            ['Selasa', '09:15', '10:00', $mapel['sejarah']],
-            ['Selasa', '10:30', '11:15', $mapel['ekonomi']],
-            ['Selasa', '11:15', '12:00', $mapel['ekonomi']],
-            ['Selasa', '13:00', '13:45', $mapel['biologi']],
-            ['Selasa', '13:45', '14:30', $mapel['biologi']],
-            ['Rabu', '07:00', '07:45', $mapel['geografi']],
-            ['Rabu', '07:45', '08:30', $mapel['geografi']],
-            ['Rabu', '08:30', '09:15', $mapel['sosiologi']],
-            ['Rabu', '09:15', '10:00', $mapel['sosiologi']],
-            ['Rabu', '10:30', '11:15', $mapel['info']],
-            ['Rabu', '11:15', '12:00', $mapel['info']],
-            ['Rabu', '13:00', '13:45', $mapel['senibudaya']],
-            ['Rabu', '13:45', '14:30', $mapel['senibudaya']],
-            ['Kamis', '07:00', '07:45', $mapel['mtk']],
-            ['Kamis', '07:45', '08:30', $mapel['mtk']],
-            ['Kamis', '08:30', '09:15', $mapel['pabp']],
-            ['Kamis', '09:15', '10:00', $mapel['fisika']],
-            ['Kamis', '10:30', '11:15', $mapel['ppkn']],
-            ['Kamis', '11:15', '12:00', $mapel['sejarah']],
-            ['Kamis', '13:00', '13:45', $mapel['biologi']],
-            ['Kamis', '13:45', '14:30', $mapel['ekonomi']],
-            ['Jumat', '07:30', '08:15', $mapel['bing']],
-            ['Jumat', '08:15', '09:00', $mapel['geografi']],
-            ['Jumat', '09:00', '09:45', $mapel['sosiologi']],
-            ['Jumat', '10:15', '11:00', $mapel['info']],
-            ['Jumat', '11:00', '11:45', $mapel['senibudaya']],
-        ];
-
-        return match ($kelasId) {
-            3, 4, 5, 6 => $templateA,   // 10A, 10B, 10C, 10D
-            7, 8 => $templateB1,  // 10E, 10F
-            9 => $templateB3,  // 10G
-            10 => $templateC,   // 10H
-            11, 12 => $templateD,   // 10I, 10J
-            default => $templateA,
-        };
     }
 
-    public function run(): void
+    /**
+     * Hitung target JP/minggu tiap mapel non-PJOK untuk 1 kelas, supaya
+     * totalnya PAS SAMA DENGAN jumlah slot kosong yang tersedia.
+     * Basis 2 JP/mapel, sisa slot dibagi round-robin sesuai prioritas.
+     */
+    private function hitungTargetJp(array $mapelIds, int $totalSlotTersedia): array
     {
-        $semesterId = 1;
-        $now = Carbon::now();
-        $penugasan = $this->getPenugasan();
+        // Urutkan sesuai prioritas
+        $urut = array_values(array_intersect(self::PRIORITAS_MAPEL, $mapelIds));
 
-        // ── 1. Jadwal Pelajaran ────────────────────────────────
-        $jadwals = [];
+        $target = [];
+        foreach ($urut as $id) {
+            $target[$id] = 2; // basis 2 JP/minggu tiap mapel
+        }
 
-        $kelasList = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12]; // 10A–10J
+        $sisa = $totalSlotTersedia - (2 * count($urut));
 
-        foreach ($kelasList as $kelasId) {
-            $template = $this->getTemplateJadwal($kelasId);
+        // Kalau sisa positif, tambahkan +1 JP bergilir mulai dari mapel prioritas atas
+        // Kalau sisa negatif (jarang terjadi), kurangi -1 JP bergilir dari mapel prioritas bawah
+        $i = 0;
+        $n = count($urut);
+        if ($n === 0) {
+            return $target;
+        }
 
-            foreach ($template as [$hari, $jamMulai, $jamSelesai, $mapelId]) {
-                // Cek apakah penugasan ada untuk kelas+mapel ini
-                if (! isset($penugasan[$kelasId][$mapelId])) {
-                    // Skip jika tidak ada guru yang ditugaskan
-                    continue;
+        while ($sisa > 0) {
+            $id = $urut[$i % $n];
+            $target[$id]++;
+            $sisa--;
+            $i++;
+        }
+        while ($sisa < 0) {
+            $id = $urut[($n - 1 - ($i % $n))];
+            if ($target[$id] > 1) {
+                $target[$id]--;
+                $sisa++;
+            }
+            $i++;
+        }
+
+        return $target;
+    }
+
+    /**
+     * Pecah target JP tiap mapel jadi potongan blok (maks 3 JP/blok,
+     * diutamakan 2 JP/blok) supaya gampang ditaruh ke slot harian.
+     * Return: array of [mapel_id, jumlah_jp_blok]
+     */
+    private function pecahJadiBlok(array $target): array
+    {
+        $blok = [];
+        foreach ($target as $mapelId => $jp) {
+            while ($jp > 0) {
+                $ambil = min(2, $jp); // blok 2 JP, sisa 1 JP jadi blok tunggal
+                $blok[] = [$mapelId, $ambil];
+                $jp -= $ambil;
+            }
+        }
+
+        return $blok;
+    }
+
+    /**
+     * Tempatkan daftar blok mapel ke hari-hari yang tersedia, round-robin
+     * antar hari supaya tiap hari dapat 4–5 mapel & tidak dobel mapel yang
+     * sama di hari yang sama (kalau memungkinkan).
+     * Return: [hari => [ [mapel_id, jp], ... ]]
+     */
+    private function tempatkanBlok(array $blok, array $kapasitas): array
+    {
+        $hariUrutan = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'];
+        $isiHari = array_fill_keys($hariUrutan, []);
+        $sisaKapasitas = $kapasitas;
+
+        // Urutkan blok terbesar dulu supaya blok 2 JP tidak ketinggalan
+        // di slot yang cuma sisa 1
+        usort($blok, fn($a, $b) => $b[1] <=> $a[1]);
+
+        $ptr = 0;
+        foreach ($blok as [$mapelId, $jp]) {
+            $ditempatkan = false;
+
+            // coba cari hari yang belum punya mapel ini & masih cukup kapasitas,
+            // mulai dari hari giliran (round robin) supaya merata
+            for ($offset = 0; $offset < count($hariUrutan); $offset++) {
+                $hari = $hariUrutan[($ptr + $offset) % count($hariUrutan)];
+                $sudahAdaMapelIni = collect($isiHari[$hari])->pluck(0)->contains($mapelId);
+
+                if (!$sudahAdaMapelIni && $sisaKapasitas[$hari] >= $jp) {
+                    $isiHari[$hari][] = [$mapelId, $jp];
+                    $sisaKapasitas[$hari] -= $jp;
+                    $ptr = ($ptr + $offset + 1) % count($hariUrutan);
+                    $ditempatkan = true;
+                    break;
+                }
+            }
+
+            // fallback: kalau semua hari sudah punya mapel ini, tempel di hari
+            // manapun yang masih cukup kapasitas (boleh dobel di hari yang sama)
+            if (!$ditempatkan) {
+                foreach ($hariUrutan as $hari) {
+                    if ($sisaKapasitas[$hari] >= $jp) {
+                        $isiHari[$hari][] = [$mapelId, $jp];
+                        $sisaKapasitas[$hari] -= $jp;
+                        $ditempatkan = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        return $isiHari;
+    }
+
+    /**
+     * Ubah isi hari (mapel + jp) menjadi baris jadwal dengan jam_mulai/jam_selesai
+     * berdasarkan slot yang tersedia hari itu (memperhitungkan slot yang
+     * sudah dipakai PJOK kalau ada).
+     */
+    private function konversiKeBarisJadwal(
+        array $isiHari,
+        bool $adaPjok,
+        int $kelasId,
+        array $penugasanKelas,
+        int $semesterId,
+        Carbon $now
+    ): array {
+        $rows = [];
+
+        foreach ($isiHari as $hari => $daftarMapel) {
+            if ($hari === 'Jumat') {
+                $slot = $this->getSlotJumat();
+            } else {
+                $slot = $this->getSlotHarian();
+                // kalau hari ini hari PJOK, 3 slot pertama sudah dipakai PJOK
+                if ($adaPjok && $hari === self::HARI_PJOK) {
+                    $slot = array_slice($slot, 3);
+                }
+            }
+
+            $slotIdx = 0;
+            foreach ($daftarMapel as [$mapelId, $jp]) {
+                if (!isset($penugasanKelas[$mapelId])) {
+                    continue; // jaga-jaga kalau tidak ada guru ditugaskan
+                }
+                if ($slotIdx + $jp > count($slot)) {
+                    continue; // kapasitas tidak cukup, skip (seharusnya tidak terjadi)
                 }
 
-                $guruId = $penugasan[$kelasId][$mapelId];
+                $jamMulai = $slot[$slotIdx][0];
+                $jamSelesai = $slot[$slotIdx + $jp - 1][1];
 
-                $jadwals[] = [
+                $rows[] = [
                     'semester_id' => $semesterId,
                     'kelas_id' => $kelasId,
                     'mapel_id' => $mapelId,
-                    'guru_id' => $guruId,
+                    'guru_id' => $penugasanKelas[$mapelId],
                     'hari' => $hari,
                     'jam_mulai' => $jamMulai,
                     'jam_selesai' => $jamSelesai,
@@ -656,23 +479,84 @@ class JadwalSeeder extends Seeder
                     'created_at' => $now,
                     'updated_at' => $now,
                 ];
+
+                $slotIdx += $jp;
+            }
+
+            // Tambahkan PJOK di jam pertama hari PJOK
+            if ($adaPjok && $hari === self::HARI_PJOK && isset($penugasanKelas[self::PJOK_ID])) {
+                $slotAsli = $this->getSlotHarian();
+                $rows[] = [
+                    'semester_id' => $semesterId,
+                    'kelas_id' => $kelasId,
+                    'mapel_id' => self::PJOK_ID,
+                    'guru_id' => $penugasanKelas[self::PJOK_ID],
+                    'hari' => $hari,
+                    'jam_mulai' => $slotAsli[0][0],   // 06:30
+                    'jam_selesai' => $slotAsli[2][1], // 08:45 (3 JP)
+                    'is_active' => true,
+                    'catatan' => null,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
             }
         }
 
-        // Insert in chunks
+        return $rows;
+    }
+
+    public function run(): void
+    {
+        $semesterId = 1;
+        $now = Carbon::now();
+        $penugasan = $this->getPenugasan();
+
+        // ── 0. Hapus data lama semester ini supaya bisa generate ulang ──
+        // tanpa perlu migrate:fresh
+        DB::table('jadwals')->where('semester_id', $semesterId)->delete();
+        DB::table('jadwal_kegiatans')->where('semester_id', $semesterId)->delete();
+
+        $kelasList = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12]; // 10A–10J
+        $jadwals = [];
+
+        foreach ($kelasList as $kelasId) {
+            $penugasanKelas = $penugasan[$kelasId] ?? [];
+            $adaPjok = isset($penugasanKelas[self::PJOK_ID]);
+
+            $mapelNonPjok = array_keys($penugasanKelas);
+            $mapelNonPjok = array_values(array_diff($mapelNonPjok, [self::PJOK_ID]));
+
+            $kapasitas = $this->getKapasitasHari($adaPjok);
+            $totalSlotTersedia = array_sum($kapasitas);
+
+            $target = $this->hitungTargetJp($mapelNonPjok, $totalSlotTersedia);
+            $blok = $this->pecahJadiBlok($target);
+            $isiHari = $this->tempatkanBlok($blok, $kapasitas);
+
+            $rows = $this->konversiKeBarisJadwal(
+                $isiHari,
+                $adaPjok,
+                $kelasId,
+                $penugasanKelas,
+                $semesterId,
+                $now
+            );
+
+            $jadwals = array_merge($jadwals, $rows);
+        }
+
         foreach (array_chunk($jadwals, 100) as $chunk) {
             DB::table('jadwals')->insert($chunk);
         }
 
-        $this->command->info('✅ Jadwal pelajaran berhasil di-seed: '.count($jadwals).' baris');
+        $this->command->info('✅ Jadwal pelajaran berhasil di-generate: ' . count($jadwals) . ' baris');
 
-        // ── 2. Jadwal Kegiatan Jumat ───────────────────────────
-        // 4 kegiatan (minggu ke-1 s.d ke-4), jam 07:00–07:30
+        // ── Jadwal kegiatan Jumat (rotasi 4 minggu) ─────────────────────
         $kegiatanList = [
-            1 => 'Upacara Bendera',
-            2 => 'Senam Bersama',
-            3 => 'Jumat Bersih',
-            4 => 'Literasi',
+            1 => 'Senam Bersama',
+            2 => 'Jumat Bersih',
+            3 => 'Literasi',
+            4 => 'Kewalikelasan',
         ];
 
         $kegiatans = [];
@@ -682,8 +566,8 @@ class JadwalSeeder extends Seeder
                 'hari' => 'Jumat',
                 'minggu_ke' => $mingguKe,
                 'nama_kegiatan' => $namaKegiatan,
-                'jam_mulai' => '07:00',
-                'jam_selesai' => '07:30',
+                'jam_mulai' => '06:30',
+                'jam_selesai' => '07:15',
                 'is_active' => true,
                 'catatan' => null,
                 'created_at' => $now,
@@ -693,15 +577,17 @@ class JadwalSeeder extends Seeder
 
         DB::table('jadwal_kegiatans')->insert($kegiatans);
 
-        $this->command->info('✅ Jadwal kegiatan Jumat berhasil di-seed: '.count($kegiatans).' baris');
+        $this->command->info('✅ Jadwal kegiatan Jumat berhasil di-generate: ' . count($kegiatans) . ' baris');
         $this->command->info('');
-        $this->command->info('📋 Ringkasan jadwal pelajaran per kelas:');
+        $this->command->info('📋 Ringkasan jadwal per kelas:');
 
         $byKelas = collect($jadwals)->groupBy('kelas_id');
         $kelasNama = [3 => '10A', 4 => '10B', 5 => '10C', 6 => '10D', 7 => '10E', 8 => '10F', 9 => '10G', 10 => '10H', 11 => '10I', 12 => '10J'];
         foreach ($byKelas as $kId => $rows) {
             $mapelCount = collect($rows)->pluck('mapel_id')->unique()->count();
-            $this->command->line("   Kelas {$kelasNama[$kId]}: {$rows->count()} slot, {$mapelCount} mapel");
+            $byHari = collect($rows)->groupBy('hari')->map->count();
+            $detail = $byHari->map(fn($c, $h) => "$h:$c")->implode(', ');
+            $this->command->line("   Kelas {$kelasNama[$kId]}: {$rows->count()} slot, {$mapelCount} mapel — [$detail]");
         }
     }
 }

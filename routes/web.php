@@ -51,7 +51,7 @@ Route::middleware(['auth'])->group(function () {
             ->parameters(['point-perilaku' => 'perilaku']);
         Route::prefix('monitoring-perilaku')->name('monitoring.')->group(function (){
             Route::get('/', [MonitoringController::class, 'index'])->name('index');
-            Route::get('/{kelas',[MonitoringController::class, 'show'])->name('show');
+            Route::get('/{kelas}',[MonitoringController::class, 'show'])->name('show');
             Route::get('/{kelas}/siswa/{siswa}', [MonitoringController::class, 'showSiswa'])->name('siswa');
         });
     });

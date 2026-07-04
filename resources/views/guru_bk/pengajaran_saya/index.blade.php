@@ -96,27 +96,25 @@
                         {{ $semesterLabel }}
                     </span>
                 </div>
-                <div style="display:flex; gap:12px;">
-                    <div class="rounded-lg bg-gray-50 py-3 text-center" style="flex:1; min-width:0;">
+                <div class="flex gap-3">
+                    <div class="rounded-lg bg-gray-50 py-3 text-center flex-1 min-w-0">
                         <p class="text-lg font-bold text-gray-900">{{ $kelasDiajar->count() }}</p>
-                        <p class="mt-0.5 text-gray-500" style="font-size:11px; line-height:1.3;">Kelas<br>Diajar</p>
+                        <p class="mt-0.5 text-gray-500 text-[11px] leading-[1.3]">Kelas<br>Diajar</p>
                     </div>
-                    <div class="rounded-lg bg-gray-50 py-3 text-center" style="flex:1; min-width:0;">
+                    <div class="rounded-lg bg-gray-50 py-3 text-center flex-1 min-w-0">
                         <p class="text-lg font-bold text-gray-900">{{ $siswaTotal }}</p>
-                        <p class="mt-0.5 text-gray-500" style="font-size:11px; line-height:1.3;">Total<br>Siswa</p>
+                        <p class="mt-0.5 text-gray-500 text-[11px] leading-[1.3]">Total<br>Siswa</p>
                     </div>
-                    <div class="rounded-lg bg-gray-50 py-3 text-center" style="flex:1; min-width:0;">
+                    <div class="rounded-lg bg-gray-50 py-3 text-center flex-1 min-w-0">
                         <p class="text-lg font-bold text-gray-900">{{ $jadwalTotal }}</p>
-                        <p class="mt-0.5 text-gray-500" style="font-size:11px; line-height:1.3;">Total<br>Jadwal</p>
+                        <p class="mt-0.5 text-gray-500 text-[11px] leading-[1.3]">Total<br>Jadwal</p>
                     </div>
-                    <div class="rounded-lg py-3 text-center {{ $jadwalHariIni->count() > 0 ? 'bg-pink-50' : 'bg-gray-50' }}"
-                        style="flex:1; min-width:0;">
+                    <div class="rounded-lg py-3 text-center {{ $jadwalHariIni->count() > 0 ? 'bg-pink-50' : 'bg-gray-50' }} flex-1 min-w-0">
                         <p
                             class="text-lg font-bold {{ $jadwalHariIni->count() > 0 ? 'text-pink-700' : 'text-gray-900' }}">
                             {{ $jadwalHariIni->count() }}
                         </p>
-                        <p class="mt-0.5 {{ $jadwalHariIni->count() > 0 ? 'text-pink-600' : 'text-gray-500' }}"
-                            style="font-size:11px; line-height:1.3;">Jadwal<br>Hari Ini</p>
+                        <p class="mt-0.5 {{ $jadwalHariIni->count() > 0 ? 'text-pink-600' : 'text-gray-500' }} text-[11px] leading-[1.3]">Jadwal<br>Hari Ini</p>
                     </div>
                 </div>
             </div>

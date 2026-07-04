@@ -2,12 +2,13 @@
 @section('title', 'Monitoring Siswa — ' . ($siswa->nama ?? 'Detail'))
 
 @section('content')
-    <div class="mx-auto max-w-7xl space-y-6">
+    <div class="mx-auto max-w-7xl space-y-6" x-data="{ openAiModal: false }">
 
         {{-- Page Header --}}
         <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div class="flex items-center gap-3">
-                <a href="{{ route('guru_bk.monitoring.show', $kelas->id) }}" class="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 transition-colors">
+                <a href="{{ route('guru_bk.monitoring.show', $kelas->id) }}"
+                    class="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 transition-colors">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                     </svg>
@@ -15,7 +16,8 @@
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Guru BK</p>
                     <h1 class="mt-1.5 text-2xl font-bold text-gray-900">Detail Siswa — {{ $siswa->nama ?? '-' }}</h1>
-                    <p class="mt-1 text-xs text-gray-500">Kelas {{ $kelas->nama_kelas ?? '-' }} · NIS {{ $siswa->nis ?? '-' }}</p>
+                    <p class="mt-1 text-xs text-gray-500">Kelas {{ $kelas->nama_kelas ?? '-' }} · NIS
+                        {{ $siswa->nis ?? '-' }}</p>
                 </div>
             </div>
         </div>
@@ -29,31 +31,32 @@
                 </div>
                 <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
                     <p class="text-xs font-medium uppercase tracking-wide text-gray-500">Skor Akhir</p>
-                    <p class="mt-2 text-2xl font-bold text-gray-900">{{ number_format($hasilTerbaru->skor_akhir ?? 0, 2) }}</p>
+                    <p class="mt-2 text-2xl font-bold text-gray-900">{{ number_format($hasilTerbaru->skor_akhir ?? 0, 2) }}
+                    </p>
                 </div>
                 <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-                    <p class="text-xs font-medium uppercase tracking-wide text-gray-500">C1 · Absensi</p>
-                    <p class="mt-2 text-2xl font-bold text-gray-900">{{ number_format($hasilTerbaru->c1 ?? 0, 2) }}</p>
+                    <p class="text-xs font-medium uppercase tracking-wide text-gray-500">C1 · Akademik</p>
+                    <p class="mt-2 text-2xl font-bold text-gray-900">{{ number_format($hasilTerbaru->c1_akademik ?? 0, 2) }}</p>
                 </div>
                 <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-                    <p class="text-xs font-medium uppercase tracking-wide text-gray-500">C2 · Akademik</p>
-                    <p class="mt-2 text-2xl font-bold text-gray-900">{{ number_format($hasilTerbaru->c2 ?? 0, 2) }}</p>
+                    <p class="text-xs font-medium uppercase tracking-wide text-gray-500">C2 · Absensi</p>
+                    <p class="mt-2 text-2xl font-bold text-gray-900">{{ number_format($hasilTerbaru->c2_absensi ?? 0, 2) }}</p>
                 </div>
                 <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
                     <p class="text-xs font-medium uppercase tracking-wide text-gray-500">C3 · Perilaku</p>
-                    <p class="mt-2 text-2xl font-bold text-gray-900">{{ number_format($hasilTerbaru->c3 ?? 0, 2) }}</p>
+                    <p class="mt-2 text-2xl font-bold text-gray-900">{{ number_format($hasilTerbaru->c3_perilaku ?? 0, 2) }}</p>
                 </div>
                 <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-                    <p class="text-xs font-medium uppercase tracking-wide text-gray-500">R1 · Absensi</p>
-                    <p class="mt-2 text-2xl font-bold text-gray-900">{{ number_format($hasilTerbaru->r1 ?? 0, 2) }}</p>
+                    <p class="text-xs font-medium uppercase tracking-wide text-gray-500">R1 · Akademik</p>
+                    <p class="mt-2 text-2xl font-bold text-gray-900">{{ number_format($hasilTerbaru->r1_akademik ?? 0, 2) }}</p>
                 </div>
                 <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-                    <p class="text-xs font-medium uppercase tracking-wide text-gray-500">R2 · Akademik</p>
-                    <p class="mt-2 text-2xl font-bold text-gray-900">{{ number_format($hasilTerbaru->r2 ?? 0, 2) }}</p>
+                    <p class="text-xs font-medium uppercase tracking-wide text-gray-500">R2 · Absensi</p>
+                    <p class="mt-2 text-2xl font-bold text-gray-900">{{ number_format($hasilTerbaru->r2_absensi ?? 0, 2) }}</p>
                 </div>
                 <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
                     <p class="text-xs font-medium uppercase tracking-wide text-gray-500">R3 · Perilaku</p>
-                    <p class="mt-2 text-2xl font-bold text-gray-900">{{ number_format($hasilTerbaru->r3 ?? 0, 2) }}</p>
+                    <p class="mt-2 text-2xl font-bold text-gray-900">{{ number_format($hasilTerbaru->r3_perilaku ?? 0, 2) }}</p>
                 </div>
             </div>
 
@@ -70,55 +73,139 @@
 
         {{-- Rekomendasi AI --}}
         <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-            <h3 class="text-sm font-semibold text-gray-900 mb-3">Rekomendasi AI</h3>
-            @if ($rekomendasiAi)
-                <div class="space-y-2">
-                    @foreach ($rekomendasiAi as $key => $value)
-                        @if (is_array($value))
-                            <div>
-                                <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">{{ $key }}</p>
-                                <ul class="mt-1 list-disc space-y-1 pl-5 text-xs text-gray-600">
-                                    @foreach ($value as $item)
-                                        <li>{{ $item }}</li>
-                                    @endforeach
-                                </ul>
-                            </div>
-                        @else
-                            <p class="text-xs text-gray-600"><span class="font-semibold">{{ ucfirst($key) }}:</span> {{ $value }}</p>
-                        @endif
-                    @endforeach
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-900">Rekomendasi AI</h3>
+                    <p class="mt-1 text-xs text-gray-500">Detail dibuka dalam modal agar tetap rapi di mobile dan desktop.
+                    </p>
                 </div>
-            @else
-                @include('partials.saw-rekomendasi-empty')
+                <button type="button" @click="openAiModal = true"
+                    class="inline-flex items-center justify-center rounded-lg border border-pink-200 bg-pink-50 px-4 py-2 text-xs font-semibold text-pink-700 transition hover:bg-pink-100">
+                    Lihat hasil generate AI
+                </button>
+            </div>
+
+@if ($rekomendasiAi)
+                 <div class="mt-3 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                     @if (!empty($rekomendasiAi['generated_at']))
+                         <span>Terakhir diperbarui
+                             {{ \Carbon\Carbon::parse($rekomendasiAi['generated_at'])->diffForHumans() }}</span>
+                     @endif
+                 </div>
+             @else
+                <div class="mt-3">
+                    @include('partials.saw-rekomendasi-empty')
+                </div>
             @endif
         </div>
+
+        @if ($rekomendasiAi)
+            <div x-show="openAiModal" x-cloak class="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center">
+                <div class="absolute inset-0 bg-slate-950/50" @click="openAiModal = false"></div>
+                <div class="relative z-10 w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-2xl">
+                    <div class="flex items-start justify-between gap-4 border-b border-gray-100 px-5 py-4 sm:px-6">
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Rekomendasi AI</p>
+                            <h3 class="mt-1 text-lg font-bold text-gray-900">{{ $siswa->nama ?? '-' }}</h3>
+                            <p class="mt-1 text-sm text-gray-500">Kelas {{ $kelas->nama_kelas ?? '-' }} · NIS
+                                {{ $siswa->nis ?? '-' }}</p>
+                        </div>
+                        <button type="button" @click="openAiModal = false"
+                            class="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:bg-gray-50">
+                            <i class="ti ti-x text-base"></i>
+                        </button>
+                    </div>
+
+<div class="max-h-[75vh] overflow-y-auto px-5 py-5 sm:px-6">
+                        <div class="space-y-4">
+                            <div class="rounded-xl border border-rose-200 bg-rose-50 p-4">
+                                <p class="text-sm font-semibold text-rose-800 mb-2">Penyebab
+                                    <span class="ml-2 rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-rose-700">{{ count($rekomendasiAi['penyebab'] ?? []) }} poin</span>
+                                </p>
+                                @if (!empty($rekomendasiAi['penyebab']))
+                                    <ul class="space-y-2 text-sm text-rose-900">
+                                        @foreach ($rekomendasiAi['penyebab'] as $item)
+                                            <li class="rounded-lg bg-white/80 px-3 py-2">{{ $item }}</li>
+                                        @endforeach
+                                    </ul>
+                                @else
+                                    <p class="mt-3 text-sm text-rose-900">Tidak ada rincian penyebab.</p>
+                                @endif
+                            </div>
+
+                            <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+                                <p class="text-sm font-semibold text-emerald-800 mb-2">Saran
+                                    <span class="ml-2 rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-emerald-700">{{ count($rekomendasiAi['saran'] ?? []) }} poin</span>
+                                </p>
+                                @if (!empty($rekomendasiAi['saran']))
+                                    <ul class="space-y-2 text-sm text-emerald-900">
+                                        @foreach ($rekomendasiAi['saran'] as $item)
+                                            <li class="rounded-lg bg-white/80 px-3 py-2">{{ $item }}</li>
+                                        @endforeach
+                                    </ul>
+                                @else
+                                    <p class="mt-3 text-sm text-emerald-900">Tidak ada saran yang diberikan.</p>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-end gap-2 border-t border-gray-100 px-5 py-4 sm:px-6">
+                        <button type="button" @click="openAiModal = false"
+                            class="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            Tutup
+                        </button>
+                    </div>
+                </div>
+            </div>
+        @endif
 
         {{-- Filter Rentang --}}
         <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
             <h3 class="text-sm font-semibold text-gray-900 mb-3">Rentang Riwayat</h3>
-            <form method="GET" action="{{ request()->fullUrlWithQuery([]) }}" class="flex flex-wrap items-center gap-2">
+            <form method="GET" action="{{ route('guru_bk.monitoring.siswa', [$kelas->id, $siswa->id]) }}"
+                class="flex flex-wrap items-center gap-2">
                 @foreach ([7, 30, 90, 180, 365] as $r)
                     @php $active = request('range') == $r && !request('dari'); @endphp
-                    <button type="submit" name="range" value="{{ $r }}" @if($active)disabled class="rounded-lg border border-pink-600 bg-pink-700 px-3 py-1.5 text-xs font-semibold text-white" @else class="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors" @endif>
+                    <button type="submit" name="range" value="{{ $r }}"
+                        @if ($active) disabled class="rounded-lg border border-pink-600 bg-pink-700 px-3 py-1.5 text-xs font-semibold text-white" @else class="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors" @endif>
                         {{ $r }} hari
                     </button>
                 @endforeach
                 <span class="text-xs text-gray-400">atau</span>
-                <input type="date" name="dari" value="{{ request('dari') }}" class="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-700 focus:border-pink-600 focus:ring-2 focus:ring-pink-100">
+                <input type="date" name="dari" value="{{ request('dari') }}"
+                    class="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-700 focus:border-pink-600 focus:ring-2 focus:ring-pink-100">
                 <span class="text-xs text-gray-400">—</span>
-                <input type="date" name="sampai" value="{{ request('sampai') }}" class="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-700 focus:border-pink-600 focus:ring-2 focus:ring-pink-100">
-                <button type="submit" class="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors">Terapkan</button>
+                <input type="date" name="sampai" value="{{ request('sampai') }}"
+                    class="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-700 focus:border-pink-600 focus:ring-2 focus:ring-pink-100">
+                <button type="submit"
+                    class="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors">Terapkan</button>
+                @if (request()->hasAny(['range', 'dari', 'sampai']))
+                    <a href="{{ route('guru_bk.monitoring.siswa', [$kelas->id, $siswa->id]) }}"
+                        class="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+                        Reset
+                    </a>
+                @endif
             </form>
-            <p class="mt-2 text-xs text-gray-400">Menampilkan: {{ \Carbon\Carbon::parse($dari)->translatedFormat('d M Y') }} — {{ \Carbon\Carbon::parse($sampai)->translatedFormat('d M Y') }}</p>
+            <p class="mt-2 text-xs text-gray-400">Menampilkan:
+                {{ \Carbon\Carbon::parse($dari)->translatedFormat('d M Y') }} —
+                {{ \Carbon\Carbon::parse($sampai)->translatedFormat('d M Y') }}</p>
         </div>
 
         {{-- Chart.js --}}
         @if ($riwayat->count() > 1)
             @php
-                $chartData = $riwayat->map(fn($r) => [
-                    'tanggal' => \Carbon\Carbon::parse($r->tanggal_hitung)->format('d M Y'),
-                    'skor' => (float) ($r->skor_akhir ?? 0),
-                ])->values();
+                $chartData = $riwayat
+                    ->map(
+                        fn($r) => [
+                            'tanggal' => \Carbon\Carbon::parse($r->tanggal_hitung)->format('d M Y'),
+                            'skor' => (float) ($r->skor_akhir ?? 0),
+                        ],
+                    )
+                    ->values();
+                $chartScores = $chartData->pluck('skor');
+                $chartMin = max(0, floor(($chartScores->min() - 0.05) * 100) / 100);
+                $chartMax = min(1, ceil(($chartScores->max() + 0.05) * 100) / 100);
             @endphp
             <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
                 <h3 class="text-sm font-semibold text-gray-900 mb-4">Grafik Tren Skor</h3>
@@ -127,45 +214,80 @@
                 </div>
             </div>
 
-            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-            <script>
-                document.addEventListener('DOMContentLoaded', function () {
-                    const ctx = document.getElementById('riwayatChart').getContext('2d');
-                    const labels = {!! json_encode($chartData->pluck('tanggal')) !!};
-                    const data = {!! json_encode($chartData->pluck('skor')) !!};
-                    new Chart(ctx, {
-                        type: 'line',
-                        data: {
-                            labels: labels,
-                            datasets: [{
-                                label: 'Skor Akhir',
-                                data: data,
-                                borderColor: '#db2777',
-                                backgroundColor: 'rgba(219, 39, 119, 0.1)',
-                                borderWidth: 2,
-                                pointBackgroundColor: '#db2777',
-                                pointRadius: 3,
-                                fill: true,
-                                tension: 0.2,
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: { display: false }
+            @push('scripts')
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const canvas = document.getElementById('riwayatChart');
+                        if (!canvas || typeof Chart === 'undefined') {
+                            return;
+                        }
+
+                        const ctx = canvas.getContext('2d');
+                        const labels = @json($chartData->pluck('tanggal'));
+                        const data = @json($chartData->pluck('skor'));
+
+                        const gradient = ctx.createLinearGradient(0, 0, 0, 260);
+                        gradient.addColorStop(0, 'rgba(219, 39, 119, 0.25)');
+                        gradient.addColorStop(1, 'rgba(219, 39, 119, 0.02)');
+
+                        new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                    label: 'Skor Akhir',
+                                    data: data,
+                                    borderColor: '#db2777',
+                                    backgroundColor: gradient,
+                                    borderWidth: 2.5,
+                                    pointBackgroundColor: '#db2777',
+                                    pointBorderColor: '#ffffff',
+                                    pointBorderWidth: 2,
+                                    pointRadius: 4,
+                                    pointHoverRadius: 5,
+                                    fill: true,
+                                    tension: 0.35,
+                                }]
                             },
-                            scales: {
-                                y: {
-                                    beginAtZero: false,
-                                    min: 0,
-                                    max: 1,
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        display: false
+                                    },
+                                    tooltip: {
+                                        callbacks: {
+                                            label: function(context) {
+                                                return 'Skor: ' + Number(context.parsed.y).toFixed(2);
+                                            }
+                                        }
+                                    }
+                                },
+                                scales: {
+                                    y: {
+                                        min: {{ $chartMin }},
+                                        max: {{ $chartMax }},
+                                        ticks: {
+                                            callback: function(value) {
+                                                return Number(value).toFixed(2);
+                                            }
+                                        },
+                                        grid: {
+                                            color: 'rgba(148, 163, 184, 0.16)'
+                                        }
+                                    },
+                                    x: {
+                                        grid: {
+                                            display: false
+                                        }
+                                    }
                                 }
                             }
-                        }
+                        });
                     });
-                });
-            </script>
+                </script>
+            @endpush
         @endif
 
         {{-- Tabel Riwayat --}}
@@ -185,13 +307,16 @@
                     <tbody class="divide-y divide-gray-100">
                         @forelse ($riwayat as $r)
                             <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="px-5 py-3.5 text-sm text-gray-700">{{ \Carbon\Carbon::parse($r->tanggal_hitung)->translatedFormat('d M Y') }}</td>
-                                <td class="px-5 py-3.5 text-center text-sm font-bold font-mono text-gray-800">{{ number_format($r->skor_akhir ?? 0, 2) }}</td>
+                                <td class="px-5 py-3.5 text-sm text-gray-700">
+                                    {{ \Carbon\Carbon::parse($r->tanggal_hitung)->translatedFormat('d M Y') }}</td>
+                                <td class="px-5 py-3.5 text-center text-sm font-bold font-mono text-gray-800">
+                                    {{ number_format($r->skor_akhir ?? 0, 2) }}</td>
                                 <td class="px-5 py-3.5 text-center">@include('partials.badge-kategori', ['kategori' => $r->kategori ?? null])</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="3" class="px-5 py-10 text-center text-xs text-gray-400">Belum ada riwayat perhitungan.</td>
+                                <td colspan="3" class="px-5 py-10 text-center text-xs text-gray-400">Belum ada riwayat
+                                    perhitungan.</td>
                             </tr>
                         @endforelse
                     </tbody>

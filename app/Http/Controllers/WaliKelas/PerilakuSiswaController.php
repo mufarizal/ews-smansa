@@ -17,6 +17,7 @@ class PerilakuSiswaController extends Controller
     private function getGuruMapelKelasIds(): array
     {
         $guru = Auth::user()->guru;
+        abort_if(!$guru, 403, 'Data guru tidak ditemukan.');
 
         return GuruMapelKelas::where('guru_id', $guru->id)
             ->pluck('id')
@@ -26,6 +27,7 @@ class PerilakuSiswaController extends Controller
     public function index(): View
     {
         $guru = Auth::user()->guru;
+        abort_if(!$guru, 403, 'Data guru tidak ditemukan.');
 
         $guruMapelKelasIds = $this->getGuruMapelKelasIds();
 
@@ -58,6 +60,7 @@ class PerilakuSiswaController extends Controller
     public function create(): View
     {
         $guru = Auth::user()->guru;
+        abort_if(!$guru, 403, 'Data guru tidak ditemukan.');
 
         $guruMapelKelasIds = $this->getGuruMapelKelasIds();
 
@@ -84,6 +87,7 @@ class PerilakuSiswaController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $guru = Auth::user()->guru;
+        abort_if(!$guru, 403, 'Data guru tidak ditemukan.');
 
         $validated = $request->validate([
             'siswa_id' => ['required', 'exists:siswas,id'],
@@ -118,8 +122,7 @@ class PerilakuSiswaController extends Controller
     public function show(PerilakuSiswa $perilakuSiswa): View
     {
         $guru = Auth::user()->guru;
-
-        abort_if($perilakuSiswa->guru_id !== $guru->id, 403);
+        abort_if(!$guru || $perilakuSiswa->guru_id !== $guru->id, 403);
 
         $perilakuSiswa->load('siswa.kelas', 'perilaku', 'guru');
 
@@ -129,8 +132,7 @@ class PerilakuSiswaController extends Controller
     public function edit(PerilakuSiswa $perilakuSiswa): View
     {
         $guru = Auth::user()->guru;
-
-        abort_if($perilakuSiswa->guru_id !== $guru->id, 403);
+        abort_if(!$guru || $perilakuSiswa->guru_id !== $guru->id, 403);
 
         $guruMapelKelasIds = $this->getGuruMapelKelasIds();
 
@@ -158,8 +160,7 @@ class PerilakuSiswaController extends Controller
     public function update(Request $request, PerilakuSiswa $perilakuSiswa): RedirectResponse
     {
         $guru = Auth::user()->guru;
-
-        abort_if($perilakuSiswa->guru_id !== $guru->id, 403);
+        abort_if(!$guru || $perilakuSiswa->guru_id !== $guru->id, 403);
 
         $validated = $request->validate([
             'siswa_id' => ['required', 'exists:siswas,id'],
@@ -187,8 +188,7 @@ class PerilakuSiswaController extends Controller
     public function destroy(PerilakuSiswa $perilakuSiswa): RedirectResponse
     {
         $guru = Auth::user()->guru;
-
-        abort_if($perilakuSiswa->guru_id !== $guru->id, 403);
+        abort_if(!$guru || $perilakuSiswa->guru_id !== $guru->id, 403);
 
         $perilakuSiswa->delete();
 

@@ -18,6 +18,7 @@ class TugasController extends Controller
     private function getGuruMapelKelasIds(): array
     {
         $guru = Auth::user()->guru;
+        abort_if(!$guru, 403, 'Data guru tidak ditemukan.');
 
         return GuruMapelKelas::where('guru_id', $guru->id)
             ->pluck('id')
@@ -46,6 +47,7 @@ class TugasController extends Controller
     public function create()
     {
         $guru = Auth::user()->guru;
+        abort_if(!$guru, 403, 'Data guru tidak ditemukan.');
 
         $guruMapelKelas = GuruMapelKelas::with(['mapel', 'kelas', 'babs.materi'])
             ->where('guru_id', $guru->id)
@@ -108,6 +110,7 @@ class TugasController extends Controller
     {
         $ids = $this->getGuruMapelKelasIds();
         $guru = Auth::user()->guru;
+        abort_if(!$guru, 403, 'Data guru tidak ditemukan.');
 
         abort_unless(in_array($tugas->guru_mapel_kelas_id, $ids), 403);
 

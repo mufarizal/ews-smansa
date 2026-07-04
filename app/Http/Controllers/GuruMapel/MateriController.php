@@ -15,9 +15,8 @@ class MateriController extends Controller
 {
     public function index(Bab $bab): View
     {
-        if ($bab->guruMapelKelas->guru_id !== Auth::user()->guru->id) {
-            abort(403);
-        }
+        $guru = Auth::user()->guru;
+        abort_if(!$guru || $bab->guruMapelKelas->guru_id !== $guru->id, 403);
 
         $bab->load(['guruMapelKelas.mapel', 'guruMapelKelas.kelas']);
         $materis = $bab->materi()->orderBy('urutan')->paginate(20);
@@ -27,9 +26,8 @@ class MateriController extends Controller
 
     public function create(Bab $bab): View
     {
-        if ($bab->guruMapelKelas->guru_id !== Auth::user()->guru->id) {
-            abort(403);
-        }
+        $guru = Auth::user()->guru;
+        abort_if(!$guru || $bab->guruMapelKelas->guru_id !== $guru->id, 403);
 
         $bab->load(['guruMapelKelas.mapel', 'guruMapelKelas.kelas']);
 
@@ -38,9 +36,8 @@ class MateriController extends Controller
 
     public function store(Bab $bab, Request $request): RedirectResponse
     {
-        if ($bab->guruMapelKelas->guru_id !== Auth::user()->guru->id) {
-            abort(403);
-        }
+        $guru = Auth::user()->guru;
+        abort_if(!$guru || $bab->guruMapelKelas->guru_id !== $guru->id, 403);
 
         $validated = $request->validate([
             'judul' => 'required|string|max:255',
@@ -66,20 +63,18 @@ class MateriController extends Controller
 
     public function edit(Bab $bab, Materi $materi): View
     {
-        if ($bab->guruMapelKelas->guru_id !== Auth::user()->guru->id) {
-            abort(403);
-        }
+        $guru = Auth::user()->guru;
+        abort_if(!$guru || $bab->guruMapelKelas->guru_id !== $guru->id, 403);
 
         $bab->load(['guruMapelKelas.mapel', 'guruMapelKelas.kelas']);
 
         return view('guru_mapel.materi.edit', compact('bab', 'materi'));
     }
 
-    public function update(Bab $bab, Request $request, Materi $materi): RedirectResponse
+    public function update(Request $request, Bab $bab, Materi $materi): RedirectResponse
     {
-        if ($bab->guruMapelKelas->guru_id !== Auth::user()->guru->id) {
-            abort(403);
-        }
+        $guru = Auth::user()->guru;
+        abort_if(!$guru || $bab->guruMapelKelas->guru_id !== $guru->id, 403);
 
         $validated = $request->validate([
             'judul' => 'required|string|max:255',
@@ -108,9 +103,8 @@ class MateriController extends Controller
 
     public function destroy(Bab $bab, Materi $materi): RedirectResponse
     {
-        if ($bab->guruMapelKelas->guru_id !== Auth::user()->guru->id) {
-            abort(403);
-        }
+        $guru = Auth::user()->guru;
+        abort_if(!$guru || $bab->guruMapelKelas->guru_id !== $guru->id, 403);
 
         if ($materi->file_materi) {
             Storage::delete('public/materi/'.$materi->file_materi);

@@ -20,7 +20,10 @@ class MonitoringController extends Controller
 
     private function getGuruId(): int
     {
-        return Auth::user()->guru->id;
+        $guru = Auth::user()->guru;
+        abort_if(!$guru, 403, 'Data guru tidak ditemukan.');
+
+        return $guru->id;
     }
 
     private function kelasDiampu(int $guruId, int $semesterId)
@@ -75,22 +78,55 @@ class MonitoringController extends Controller
         $this->pastikanKelasDiampu($kelas->id, $guruId, $semester->id);
 
         $snapshot = $this->snapshotService->latestSnapshotPerKelas($kelas->id, $semester->id);
+        $siswaKelas = Siswa::select('id', 'kelas_id', 'nis', 'nama')
+            ->where('kelas_id', $kelas->id)
+            ->orderBy('nama')
+            ->get();
+        $snapshotBySiswaId = $snapshot->keyBy('siswa_id');
 
         $kategoriFilter = $request->query('kategori');
 
-        if ($kategoriFilter && in_array($kategoriFilter, ['binaan', 'perhatian', 'aman'], true)) {
-            $snapshot = $snapshot->where('kategori', $kategoriFilter)->values();
-        }
+        $siswaIdsWithSnapshot = $snapshot->pluck('siswa_id')->filter()->values()->toArray();
+        $tanggalTerbaru = $snapshot->first()->tanggal_hitung ?? null;
+        $trendsBatch = $tanggalTerbaru
+            ? $this->snapshotService->trendHarianBatch($siswaIdsWithSnapshot, $semester->id, $tanggalTerbaru)
+            : collect();
 
-        $siswaTerurut = $this->snapshotService->urutkanPrioritas($snapshot)
-            ->map(function ($item) use ($semester) {
-                $item->trend_harian = $this->snapshotService->trendHarian(
-                    $item->siswa_id,
-                    $semester->id,
-                    $item->tanggal_hitung
-                );
+        $siswaTerurut = $siswaKelas
+            ->map(function ($siswa) use ($snapshotBySiswaId, $semester, $trendsBatch) {
+                $item = $snapshotBySiswaId->get($siswa->id);
+
+                if (!$item) {
+                    return (object) [
+                        'siswa_id' => $siswa->id,
+                        'siswa' => $siswa,
+                        'kategori' => null,
+                        'skor_akhir' => null,
+                        'data_tidak_lengkap' => true,
+                        'trend_harian' => null,
+                        'snapshot_tidak_ada' => true,
+                    ];
+                }
+
+                $item->trend_harian = $trendsBatch->get($item->siswa_id, ['arah' => 'tetap', 'selisih' => 0.0, 'skor_sebelumnya' => null]);
+                $item->snapshot_tidak_ada = false;
+
                 return $item;
-            });
+            })
+            ->when($kategoriFilter && in_array($kategoriFilter, ['binaan', 'perhatian', 'aman'], true), function ($collection) use ($kategoriFilter) {
+                return $collection->filter(fn($item) => ($item->kategori ?? null) === $kategoriFilter)->values();
+            })
+            ->sortBy(function ($item) {
+                if (!empty($item->snapshot_tidak_ada)) {
+                    return sprintf('99-%s', strtolower($item->siswa->nama ?? ''));
+                }
+
+                $rankMap = ['binaan' => 0, 'perhatian' => 1, 'aman' => 2];
+                $rank = $rankMap[$item->kategori] ?? 99;
+
+                return sprintf('%02d-%015.4f-%s', $rank, (float) ($item->skor_akhir ?? 0), strtolower($item->siswa->nama ?? ''));
+            })
+            ->values();
 
         $trendMingguanKelas = $this->snapshotService->trendMingguan($kelas->id, $semester->id);
 
@@ -116,6 +152,7 @@ class MonitoringController extends Controller
         abort_unless($siswa->kelas_id === $kelas->id, 404);
 
         $hasilTerbaru = $this->snapshotService->latestSnapshotPerSiswa($siswa->id, $semester->id);
+        $hasilTerbaru?->loadMissing('siswa');
 
         $trendHarian = $hasilTerbaru
             ? $this->snapshotService->trendHarian($siswa->id, $semester->id, $hasilTerbaru->tanggal_hitung)
@@ -148,7 +185,18 @@ class MonitoringController extends Controller
         $customSampai = $request->query('sampai');
 
         if ($customDari && $customSampai) {
-            return [$customDari, $customSampai];
+            try {
+                $dari = Carbon::parse($customDari)->toDateString();
+                $sampai = Carbon::parse($customSampai)->toDateString();
+
+                if ($dari > $sampai) {
+                    [$dari, $sampai] = [$sampai, $dari];
+                }
+
+                return [$dari, $sampai];
+            } catch (\Throwable $e) {
+                // Fall back to predefined range when invalid custom date is provided.
+            }
         }
 
         $range = (int) $request->query('range', 30);

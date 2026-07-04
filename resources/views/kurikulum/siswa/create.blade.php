@@ -94,7 +94,6 @@
         const kelasSelect = document.getElementById('kelas_id');
 
         function filterKelasByAngkatan() {
-
             Array.from(kelasSelect.options).forEach((option, index) => {
                 if (index === 0) {
                     option.hidden = false;
@@ -103,7 +102,7 @@
                 }
 
                 const optionAngkatan = option.dataset.angkatan || '';
-                const matched = angkatan !== '' && optionAngkatan === angkatan;
+                const matched = optionAngkatan !== '';
 
                 option.hidden = !matched;
                 option.disabled = !matched;
@@ -115,7 +114,6 @@
             }
         }
 
-        angkatanSelect.addEventListener('change', filterKelasByAngkatan);
         filterKelasByAngkatan();
     </script>
 

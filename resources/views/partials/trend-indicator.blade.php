@@ -17,13 +17,13 @@
         $color = 'text-emerald-700';
         $bg = 'bg-emerald-50';
         $border = 'border-emerald-200';
-        $arrowText = 'Naik ' . number_format($selisih, 2);
+        $arrowText = 'Naik ' . number_format((float) ($selisih ?? 0), 2);
     } elseif ($arah === 'turun') {
         $icon = '<svg class="h-3.5 w-3.5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>';
         $color = 'text-rose-700';
         $bg = 'bg-rose-50';
         $border = 'border-rose-200';
-        $arrowText = 'Turun ' . number_format($selisih, 2);
+        $arrowText = 'Turun ' . number_format((float) ($selisih ?? 0), 2);
     } else {
         $icon = '<svg class="h-3.5 w-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14" /></svg>';
         $color = 'text-gray-700';

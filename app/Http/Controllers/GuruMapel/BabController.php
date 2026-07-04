@@ -65,9 +65,8 @@ class BabController extends Controller
         $validated['urutan'] = (int) $validated['urutan'];
 
         $assignment = GuruMapelKelas::with(['mapel', 'kelas'])->findOrFail($validated['guru_mapel_kelas_id']);
-        if ($assignment->guru_id !== Auth::user()->guru->id) {
-            abort(403);
-        }
+        $guru = Auth::user()->guru;
+        abort_if(!$guru || $assignment->guru_id !== $guru->id, 403);
 
         Bab::create($validated);
 
@@ -77,9 +76,8 @@ class BabController extends Controller
 
     public function show(Bab $bab): View
     {
-        if ($bab->guruMapelKelas->guru_id !== Auth::user()->guru->id) {
-            abort(403);
-        }
+        $guru = Auth::user()->guru;
+        abort_if(!$guru || $bab->guruMapelKelas->guru_id !== $guru->id, 403);
 
         $bab->load([
             'guruMapelKelas.mapel',
@@ -92,9 +90,8 @@ class BabController extends Controller
 
     public function edit(Bab $bab): View
     {
-        if ($bab->guruMapelKelas->guru_id !== Auth::user()->guru->id) {
-            abort(403);
-        }
+        $guru = Auth::user()->guru;
+        abort_if(!$guru || $bab->guruMapelKelas->guru_id !== $guru->id, 403);
 
         $bab->load(['guruMapelKelas.mapel', 'guruMapelKelas.kelas']);
 
@@ -103,9 +100,8 @@ class BabController extends Controller
 
     public function update(Request $request, Bab $bab): RedirectResponse
     {
-        if ($bab->guruMapelKelas->guru_id !== Auth::user()->guru->id) {
-            abort(403);
-        }
+        $guru = Auth::user()->guru;
+        abort_if(!$guru || $bab->guruMapelKelas->guru_id !== $guru->id, 403);
 
         $validated = $request->validate([
             'nama_bab' => 'required|string|max:255',
@@ -123,9 +119,8 @@ class BabController extends Controller
 
     public function destroy(Bab $bab): RedirectResponse
     {
-        if ($bab->guruMapelKelas->guru_id !== Auth::user()->guru->id) {
-            abort(403);
-        }
+        $guru = Auth::user()->guru;
+        abort_if(!$guru || $bab->guruMapelKelas->guru_id !== $guru->id, 403);
 
         $bab->delete();
 

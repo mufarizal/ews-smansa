@@ -77,7 +77,20 @@ class KelasSayaController extends Controller
             ->latestSnapshotPerKelas($kelas->id, $semester->id)
             ->keyBy('siswa_id');
 
-        $siswa->through(function ($item) use ($snapshotPerSiswa, $semester) {
+        $tanggalTerbaru = $snapshotPerSiswa->first()->tanggal_hitung ?? null;
+        $siswaIdsWithSnapshot = $snapshotPerSiswa->pluck('siswa_id')->filter()->values()->toArray();
+        $trendsBatch = $tanggalTerbaru
+            ? $this->snapshotService->trendHarianBatch($siswaIdsWithSnapshot, $semester->id, $tanggalTerbaru)
+            : collect();
+
+        $rekomendasiCache = $snapshotPerSiswa
+            ->filter(fn ($s) => !empty($s->kategori))
+            ->unique(fn ($s) => $s->kelas_id.'|'.$s->kategori)
+            ->mapWithKeys(fn ($s) => [
+                $s->kelas_id.'|'.$s->kategori => $this->snapshotService->aiRekomendasiSiswa($s),
+            ]);
+
+        $siswa->through(function ($item) use ($snapshotPerSiswa, $semester, $trendsBatch, $rekomendasiCache) {
             $hasilSaw = $snapshotPerSiswa->get($item->id);
 
             $item->saw_kategori = $hasilSaw->kategori ?? null;
@@ -85,11 +98,11 @@ class KelasSayaController extends Controller
             $item->saw_data_tidak_lengkap = $hasilSaw->data_tidak_lengkap ?? null;
 
             $item->saw_trend_harian = $hasilSaw
-                ? $this->snapshotService->trendHarian($item->id, $semester->id, $hasilSaw->tanggal_hitung)
+                ? ($trendsBatch->get($item->id) ?? ['arah' => 'tetap', 'selisih' => 0.0, 'skor_sebelumnya' => null])
                 : null;
 
-            $item->saw_ai_rekomendasi = $hasilSaw
-                ? $this->snapshotService->aiRekomendasiSiswa($hasilSaw)
+            $item->saw_ai_rekomendasi = $hasilSaw && !empty($hasilSaw->kategori)
+                ? ($rekomendasiCache->get($hasilSaw->kelas_id.'|'.$hasilSaw->kategori) ?? null)
                 : null;
 
             return $item;

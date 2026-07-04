@@ -17,7 +17,10 @@ class DashboardController extends Controller
 
     private function getGuruId(): int
     {
-        return Auth::user()->guru->id;
+        $guru = Auth::user()->guru;
+        abort_if(!$guru, 403, 'Data guru tidak ditemukan.');
+
+        return $guru->id;
     }
 
     public function index()
@@ -25,7 +28,6 @@ class DashboardController extends Controller
         $semester = Semester::where('is_active', true)->firstOrFail();
         $guruId = $this->getGuruId();
 
-        // Kelas yang diampu di semester aktif
         $guruBkKelas = GuruBkKelas::with('kelas')
             ->where('guru_id', $guruId)
             ->where('semester_id', $semester->id)
@@ -33,10 +35,9 @@ class DashboardController extends Controller
 
         $kelasIds = $guruBkKelas->pluck('kelas_id');
 
-        // Semua hasil SAW (snapshot TERBARU tiap kelas) dari kelas yang diampu,
-        // dipakai untuk ringkasan global.
-        $semuaHasilTerbaru = $kelasIds->flatMap(
-            fn($kelasId) => $this->snapshotService->latestSnapshotPerKelas($kelasId, $semester->id)
+        $semuaHasilTerbaru = $this->snapshotService->latestSnapshotPerKelasBatch(
+            $kelasIds->toArray(),
+            $semester->id
         );
 
         $ringkasan = [
@@ -46,9 +47,10 @@ class DashboardController extends Controller
             'total' => $semuaHasilTerbaru->count(),
         ];
 
-        // 5 siswa terburuk PER KELAS (bukan gabungan lintas kelas) + trend
-        $ringkasanPerKelas = $guruBkKelas->mapWithKeys(function ($gbk) use ($semester) {
-            $snapshot = $this->snapshotService->latestSnapshotPerKelas($gbk->kelas_id, $semester->id);
+        $snapshotPerKelas = $semuaHasilTerbaru->groupBy('kelas_id');
+
+        $ringkasanPerKelas = $guruBkKelas->mapWithKeys(function ($gbk) use ($semester, $snapshotPerKelas) {
+            $snapshot = $snapshotPerKelas->get($gbk->kelas_id, collect());
 
             if ($snapshot->isEmpty()) {
                 return [
@@ -61,15 +63,18 @@ class DashboardController extends Controller
             }
 
             $siswaTerburuk = $this->snapshotService->urutkanPrioritas($snapshot)
-                ->take(5)
-                ->map(function ($item) use ($semester) {
-                    $item->trend_harian = $this->snapshotService->trendHarian(
-                        $item->siswa_id,
-                        $semester->id,
-                        $item->tanggal_hitung
-                    );
-                    return $item;
-                });
+                ->take(5);
+
+            $trends = $this->snapshotService->trendHarianBatch(
+                $siswaTerburuk->pluck('siswa_id')->toArray(),
+                $semester->id,
+                $siswaTerburuk->first()->tanggal_hitung
+            );
+
+            $siswaTerburuk = $siswaTerburuk->map(function ($item) use ($trends) {
+                $item->trend_harian = $trends->get($item->siswa_id, ['arah' => 'tetap', 'selisih' => 0.0, 'skor_sebelumnya' => null]);
+                return $item;
+            });
 
             return [
                 $gbk->kelas_id => [
@@ -80,7 +85,6 @@ class DashboardController extends Controller
             ];
         });
 
-        // Status generate per kelas (kesehatan scheduler, BUKAN generate manual)
         $hasilPerKelas = EarlyWarningResult::where('semester_id', $semester->id)
             ->whereIn('kelas_id', $kelasIds)
             ->selectRaw('kelas_id, COUNT(*) as total_siswa, MAX(generated_at) as last_generated_at')
@@ -88,12 +92,10 @@ class DashboardController extends Controller
             ->get()
             ->keyBy('kelas_id');
 
-        // Kelas yang belum pernah di-generate
         $kelasBelumGenerate = $guruBkKelas->filter(
             fn($gbk) => !isset($hasilPerKelas[$gbk->kelas_id])
         );
 
-        // Kelas yang sudah generate tapi > 30 hari lalu
         $kelasStale = $guruBkKelas->filter(function ($gbk) use ($hasilPerKelas) {
             $info = $hasilPerKelas[$gbk->kelas_id] ?? null;
             return $info && now()->diffInDays($info->last_generated_at) > 30;

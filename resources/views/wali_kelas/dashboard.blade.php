@@ -35,25 +35,125 @@
             @endif
 
             {{-- Stat Ringkasan Global --}}
-            @if ($ringkasan->total > 0)
+            @if ($ringkasan && $ringkasan['total'] > 0)
                 <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                    <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-                        <p class="text-3xl font-bold text-gray-800">{{ $ringkasan->total }}</p>
+                    <div class="rounded-xl border border-emerald-200 bg-white p-5 shadow-sm">
+                        <p class="text-3xl font-bold text-gray-800">{{ $ringkasan['total'] }}</p>
                         <p class="text-sm text-gray-500 mt-0.5">Total Siswa</p>
                     </div>
-                    <div class="rounded-xl border border-rose-200 bg-rose-50 p-5 shadow-sm">
-                        <p class="text-3xl font-bold text-rose-600">{{ $ringkasan->binaan }}</p>
+                    <div class="rounded-xl border border-emerald-200 bg-white p-5 shadow-sm">
+                        <p class="text-3xl font-bold text-rose-600">{{ $ringkasan['binaan'] ?? 0 }}</p>
                         <p class="text-sm font-medium text-rose-700 mt-0.5">Binaan</p>
                     </div>
-                    <div class="rounded-xl border border-amber-200 bg-amber-50 p-5 shadow-sm">
-                        <p class="text-3xl font-bold text-amber-600">{{ $ringkasan->perhatian }}</p>
+                    <div class="rounded-xl border border-emerald-200 bg-white p-5 shadow-sm">
+                        <p class="text-3xl font-bold text-amber-600">{{ $ringkasan['perhatian'] ?? 0 }}</p>
                         <p class="text-sm font-medium text-amber-700 mt-0.5">Perhatian</p>
                     </div>
-                    <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm">
-                        <p class="text-3xl font-bold text-emerald-600">{{ $ringkasan->aman }}</p>
+                    <div class="rounded-xl border border-emerald-200 bg-white p-5 shadow-sm">
+                        <p class="text-3xl font-bold text-emerald-600">{{ $ringkasan['aman'] ?? 0 }}</p>
                         <p class="text-sm font-medium text-emerald-700 mt-0.5">Aman</p>
                     </div>
                 </div>
+            @endif
+
+            {{-- Chart Tren Siswa --}}
+            @if ($siswaTerurut->count() > 1)
+                @php
+                    $chartData = $siswaTerurut->take(20)->map(
+                        fn($r) => [
+                            'nama' => $r->siswa->nama ?? '?',
+                            'skor' => (float) ($r->skor_akhir ?? 0),
+                        ],
+                    )->values();
+                    $chartScores = $chartData->pluck('skor');
+                    $chartMin = max(0, floor(($chartScores->min() - 0.05) * 100) / 100);
+                    $chartMax = min(1, ceil(($chartScores->max() + 0.05) * 100) / 100);
+                @endphp
+                <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+                    <h3 class="text-sm font-semibold text-gray-900 mb-4">Grafik Skor SAW Siswa</h3>
+                    <div class="relative h-64 w-full">
+                        <canvas id="waliKelasChart"></canvas>
+                    </div>
+                </div>
+
+                @push('scripts')
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const canvas = document.getElementById('waliKelasChart');
+                            if (!canvas || typeof Chart === 'undefined') {
+                                return;
+                            }
+
+                            const ctx = canvas.getContext('2d');
+                            const labels = @json($chartData->pluck('nama'));
+                            const data = @json($chartData->pluck('skor'));
+
+                            const gradient = ctx.createLinearGradient(0, 0, 0, 260);
+                            gradient.addColorStop(0, 'rgba(219, 39, 119, 0.25)');
+                            gradient.addColorStop(1, 'rgba(219, 39, 119, 0.02)');
+
+                            new Chart(ctx, {
+                                type: 'line',
+                                data: {
+                                    labels: labels,
+                                    datasets: [{
+                                        label: 'Skor Akhir',
+                                        data: data,
+                                        borderColor: '#db2777',
+                                        backgroundColor: gradient,
+                                        borderWidth: 2.5,
+                                        pointBackgroundColor: '#db2777',
+                                        pointBorderColor: '#ffffff',
+                                        pointBorderWidth: 2,
+                                        pointRadius: 4,
+                                        pointHoverRadius: 5,
+                                        fill: true,
+                                        tension: 0.35,
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: {
+                                            display: false
+                                        },
+                                        tooltip: {
+                                            callbacks: {
+                                                label: function(context) {
+                                                    return 'Skor: ' + Number(context.parsed.y).toFixed(2);
+                                                }
+                                            }
+                                        }
+                                    },
+                                    scales: {
+                                        y: {
+                                            min: {{ $chartMin }},
+                                            max: {{ $chartMax }},
+                                            ticks: {
+                                                callback: function(value) {
+                                                    return Number(value).toFixed(2);
+                                                }
+                                            },
+                                            grid: {
+                                                color: 'rgba(148, 163, 184, 0.16)'
+                                            }
+                                        },
+                                        x: {
+                                            ticks: {
+                                                maxRotation: 45,
+                                                minRotation: 45
+                                            },
+                                            grid: {
+                                                display: false
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                        });
+                    </script>
+                @endpush
             @endif
 
             {{-- Siswa Prioritas --}}

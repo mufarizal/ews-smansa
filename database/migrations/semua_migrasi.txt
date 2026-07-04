@@ -1,0 +1,1148 @@
+﻿<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('users', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('email')->unique();
+            $table->string('default_role')->nullable();
+            $table->timestamp('email_verified_at')->nullable();
+            $table->string('password');
+            $table->rememberToken();
+            $table->timestamps();
+        });
+
+        Schema::create('password_reset_tokens', function (Blueprint $table) {
+            $table->string('email')->primary();
+            $table->string('token');
+            $table->timestamp('created_at')->nullable();
+        });
+
+        Schema::create('sessions', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->foreignId('user_id')->nullable()->index();
+            $table->string('ip_address', 45)->nullable();
+            $table->text('user_agent')->nullable();
+            $table->longText('payload');
+            $table->integer('last_activity')->index();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('sessions');
+        Schema::dropIfExists('password_reset_tokens');
+        Schema::dropIfExists('users');
+    }
+};
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('cache', function (Blueprint $table) {
+            $table->string('key')->primary();
+            $table->mediumText('value');
+            $table->integer('expiration')->index();
+        });
+
+        Schema::create('cache_locks', function (Blueprint $table) {
+            $table->string('key')->primary();
+            $table->string('owner');
+            $table->integer('expiration')->index();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('cache_locks');
+        Schema::dropIfExists('cache');
+    }
+};
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('jobs', function (Blueprint $table) {
+            $table->id();
+            $table->string('queue')->index();
+            $table->longText('payload');
+            $table->unsignedTinyInteger('attempts');
+            $table->unsignedInteger('reserved_at')->nullable();
+            $table->unsignedInteger('available_at');
+            $table->unsignedInteger('created_at');
+        });
+
+        Schema::create('job_batches', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->string('name');
+            $table->integer('total_jobs');
+            $table->integer('pending_jobs');
+            $table->integer('failed_jobs');
+            $table->longText('failed_job_ids');
+            $table->mediumText('options')->nullable();
+            $table->integer('cancelled_at')->nullable();
+            $table->integer('created_at');
+            $table->integer('finished_at')->nullable();
+        });
+
+        Schema::create('failed_jobs', function (Blueprint $table) {
+            $table->id();
+            $table->string('uuid')->unique();
+            $table->text('connection');
+            $table->text('queue');
+            $table->longText('payload');
+            $table->longText('exception');
+            $table->timestamp('failed_at')->useCurrent();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('failed_jobs');
+        Schema::dropIfExists('job_batches');
+        Schema::dropIfExists('jobs');
+    }
+};
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('semesters', function (Blueprint $table) {
+            $table->id();
+            $table->string('nama');
+            $table->date('tanggal_mulai');
+            $table->date('tanggal_selesai');
+            $table->boolean('is_active')->default(false);
+            $table->text('keterangan')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('semesters');
+    }
+};
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('roles', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('slug')->unique();
+            $table->timestamps();
+        });
+
+        Schema::create('role_user', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('role_id')->constrained()->onDelete('cascade');
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('role_user');
+        Schema::dropIfExists('roles');
+    }
+};
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('gurus', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->unique()->constrained()->cascadeOnDelete();
+            $table->string('nip')->unique();
+            $table->string('nama');
+            $table->string('no_hp')->nullable();
+            $table->enum('type', ['mapel', 'piket', 'bk'])->nullable();
+            $table->json('piket_days')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('gurus');
+    }
+};
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('kelas', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('wali_kelas_id')->nullable()->constrained('gurus')->cascadeOnDelete();
+            $table->foreignId('semester_id')->nullable()->constrained('semesters')->nullOnDelete();
+            $table->string('nama_kelas');
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('kelas');
+    }
+};
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('siswas', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('kelas_id')->constrained()->cascadeOnDelete();
+            $table->string('nis')->unique();
+            $table->string('nama');
+            $table->text('alamat')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('siswas');
+    }
+};
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('mapels', function (Blueprint $table) {
+            $table->id();
+            $table->string('nama')->unique();
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('mapels');
+    }
+};
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('guru_mapel_kelas', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('guru_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('mapel_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('kelas_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('semester_id')->constrained()->cascadeOnDelete();
+            $table->timestamps();
+
+            $table->unique(['guru_id', 'mapel_id', 'kelas_id']);
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('guru_mapel_kelas');
+    }
+};
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('jadwals', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('semester_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('kelas_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('guru_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('mapel_id')->constrained()->cascadeOnDelete();
+            $table->string('hari'); // Senin-Jumat
+            $table->time('jam_mulai');
+            $table->time('jam_selesai');
+            $table->boolean('is_active')->default(true);
+            $table->text('catatan')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('jadwals');
+    }
+};
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('guru_pikets', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('guru_id')->constrained('gurus')->cascadeOnDelete();
+            $table->foreignId('semester_id')->constrained('semesters')->cascadeOnDelete();
+            $table->string('hari')->comment('Hari piket');
+            $table->text('catatan')->nullable()->comment('Catatan admin');
+            $table->timestamps();
+
+            $table->index(['guru_id', 'hari']);
+            // $table->index('is_active');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('guru_pikets');
+    }
+};
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('guru_bk_kelas', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('guru_id')->constrained('gurus')->cascadeOnDelete();
+            $table->foreignId('semester_id')->constrained('semesters')->cascadeOnDelete();
+            $table->foreignId('kelas_id')->constrained('kelas')->cascadeOnDelete();
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('guru_bk_kelas');
+    }
+};
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('qr_sessions', function (Blueprint $table) {
+            $table->id();
+            $table->date('tanggal');
+            $table->dateTime('jam_batas')->nullable()->comment('Batas waktu absen masuk/pulang');
+            $table->dateTime('jam_maksimal')->nullable()->comment('Jam maksimal absen masuk');
+            $table->dateTime('generated_at');
+            $table->dateTime('expire_at');
+            $table->integer('durasi_menit')->default(1440);
+            $table->foreignId('dibuat_oleh')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('kelas_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('jadwal_id')->nullable()->constrained('jadwals')->nullOnDelete();
+            $table->foreignId('mapel_id')->nullable()->constrained()->nullOnDelete();
+            $table->enum('jenis_sesi', ['harian', 'mapel'])->default('harian');
+            $table->enum('tipe', ['masuk', 'pulang'])->default('masuk');
+            $table->integer('jumlah_hadir')->default(0);
+            $table->boolean('sudah_ditutup')->default(false);
+            $table->text('catatan')->nullable();
+            $table->string('kode_sesi')->unique()->nullable();
+            $table->timestamps();
+
+            $table->index('tanggal');
+            $table->index('expire_at');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('qr_sessions');
+    }
+};
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('absensis', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('siswa_id')->constrained()->cascadeOnDelete();
+            $table->date('tanggal');
+            $table->enum('tipe', ['harian', 'mapel']);
+            $table->foreignId('jadwal_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('guru_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('mapel_id')->nullable()->constrained()->nullOnDelete();
+            $table->enum('status', ['hadir', 'izin', 'sakit', 'alpha', 'terlambat'])->nullable();
+            $table->timestamp('jam_masuk')->nullable();
+            $table->timestamp('jam_pulang')->nullable();
+            $table->integer('terlambat_menit')->default(0);
+            $table->string('ip_address')->nullable();
+            $table->string('device_id')->nullable();
+            $table->decimal('latitude', 10, 8)->nullable()->comment('Latitude GPS');
+            $table->decimal('longitude', 11, 8)->nullable()->comment('Longitude GPS');
+            $table->integer('akurasi_meter')->nullable()->comment('Akurasi GPS dalam meter');
+            $table->integer('distance_meter')->nullable()->comment('Jarak dari sekolah dalam meter');
+            $table->foreignId('qr_session_id')->nullable()->constrained('qr_sessions')->nullOnDelete();
+            $table->boolean('sudah_disetujui')->default(true);
+            $table->text('catatan_persetujuan')->nullable();
+            $table->foreignId('disetujui_oleh')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamps();
+
+            $table->unique(['siswa_id', 'tanggal', 'tipe', 'device_id'], 'unique_siswa_hari_device');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('absensis');
+    }
+};
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::table('gurus', function (Blueprint $table) {
+            $table->dropColumn(['type', 'piket_days']);
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('gurus', function (Blueprint $table) {
+            $table->enum('type', ['mapel', 'piket', 'bk'])->nullable()->after('no_hp');
+            $table->json('piket_days')->nullable()->after('type');
+        });
+    }
+};
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('jadwal_kegiatans', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('semester_id')->constrained()->cascadeOnDelete();
+            $table->string('hari')->default('Jumat');
+            $table->tinyInteger('minggu_ke');
+            $table->string('nama_kegiatan');
+            $table->time('jam_mulai');
+            $table->time('jam_selesai');
+            $table->boolean('is_active')->default(true);
+            $table->text('catatan')->nullable();
+            $table->timestamps();
+            $table->unique(['semester_id', 'hari', 'minggu_ke'], 'unique_kegiatan_per_minggu');
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('jadwal_kegiatans');
+    }
+};
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('babs', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('guru_mapel_kelas_id')->constrained('guru_mapel_kelas')->cascadeOnDelete();
+            $table->string('nama_bab');
+            $table->integer('urutan')->default(1);
+            $table->text('deskripsi')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('babs');
+    }
+};
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('materis', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('bab_id')->constrained('babs')->cascadeOnDelete();
+            $table->string('judul');
+            $table->longText('isi_materi')->nullable();
+            $table->string('file_materi')->nullable();
+            $table->integer('urutan')->default(1);
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('materis');
+    }
+};
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::table('absensis', function (Blueprint $table) {
+            $table->foreignId('bab_id')->nullable()->constrained('babs')->nullOnDelete()->after('jadwal_id');
+            $table->foreignId('materi_id')->nullable()->constrained('materis')->nullOnDelete()->after('bab_id');
+            $table->string('topik_pembelajaran')->nullable()->after('materi_id');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('absensis', function (Blueprint $table) {
+            $table->dropForeign(['materi_id']);
+            $table->dropColumn('materi_id');
+
+            $table->dropForeign(['bab_id']);
+            $table->dropColumn('bab_id');
+
+            $table->dropColumn('topik_pembelajaran');
+        });
+    }
+};
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('tugas', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('guru_mapel_kelas_id')->constrained('guru_mapel_kelas')->cascadeOnDelete();
+            $table->foreignId('materi_id')->constrained('materis')->cascadeOnDelete();
+            $table->string('judul');
+            $table->text('deskripsi')->nullable();
+            $table->date('tanggal_tugas');
+            $table->date('tanggal_deadline')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('tugas');
+    }
+};
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('nilai_tugas', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('tugas_id')->constrained('tugas')->cascadeOnDelete();
+            $table->foreignId('siswa_id')->constrained('siswas')->cascadeOnDelete();
+            $table->decimal('nilai', 5, 2)->nullable();
+            $table->enum('status', ['mengerjakan', 'tidak_mengerjakan'])->default('mengerjakan');
+            $table->text('catatan')->nullable();
+            $table->timestamps();
+            $table->unique(['tugas_id', 'siswa_id']);
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('nilai_tugas');
+    }
+};
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('ujian_harians', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('guru_mapel_kelas_id')->constrained('guru_mapel_kelas')->cascadeOnDelete();
+            $table->foreignId('bab_id')->constrained('babs')->cascadeOnDelete();
+            $table->string('judul');
+            $table->date('tanggal_ujian');
+            $table->integer('durasi_menit')->default(60);
+            $table->enum('status', ['draft', 'publish', 'selesai'])->default('draft');
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('ujian_harians');
+    }
+};
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('soal_ujians', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('ujian_harian_id')->constrained('ujian_harians')->cascadeOnDelete();
+            $table->text('soal');
+            $table->text('opsi_a');
+            $table->text('opsi_b');
+            $table->text('opsi_c');
+            $table->text('opsi_d');
+            $table->enum('jawaban_benar', ['a', 'b', 'c', 'd']);
+            $table->integer('bobot')->default(1);
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('soal_ujians');
+    }
+};
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('jawaban_ujians', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('ujian_harian_id')->constrained('ujian_harians')->cascadeOnDelete();
+            $table->foreignId('soal_ujian_id')->constrained('soal_ujians')->cascadeOnDelete();
+            $table->foreignId('siswa_id')->constrained('siswas')->cascadeOnDelete();
+            $table->enum('jawaban', ['a', 'b', 'c', 'd'])->nullable();
+            $table->boolean('is_benar')->default(false);
+            $table->timestamps();
+            $table->unique(['soal_ujian_id', 'siswa_id']);
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('jawaban_ujians');
+    }
+};
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('hasil_ujians', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('ujian_harian_id')->constrained('ujian_harians')->cascadeOnDelete();
+            $table->foreignId('siswa_id')->constrained('siswas')->cascadeOnDelete();
+            $table->integer('jumlah_benar')->default(0);
+            $table->integer('jumlah_salah')->default(0);
+            $table->decimal('nilai', 5, 2)->nullable();
+            $table->timestamps();
+            $table->unique(['ujian_harian_id', 'siswa_id']);
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('hasil_ujians');
+    }
+};
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::table('tugas', function (Blueprint $table) {
+            $table->enum('jenis', ['online', 'offline'])->default('offline')->after('tanggal_deadline');
+            $table->string('link_meeting')->nullable()->after('jenis');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('tugas', function (Blueprint $table) {
+            $table->dropColumn(['jenis', 'link_meeting']);
+        });
+    }
+};
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('soal_tugas', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('tugas_id')->constrained('tugas')->cascadeOnDelete();
+            $table->text('soal');
+            $table->text('opsi_a');
+            $table->text('opsi_b');
+            $table->text('opsi_c');
+            $table->text('opsi_d');
+            $table->enum('jawaban_benar', ['a', 'b', 'c', 'd']);
+            $table->integer('bobot')->default(1);
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('soal_tugas');
+    }
+};
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::table('nilai_tugas', function (Blueprint $table) {
+            $table->boolean('is_late')->default(false)->after('status');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('nilai_tugas', function (Blueprint $table) {
+            $table->dropColumn('is_late');
+        });
+    }
+};
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('jawaban_tugas', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('tugas_id')->constrained('tugas')->cascadeOnDelete();
+            $table->foreignId('soal_tugas_id')->constrained('soal_tugas')->cascadeOnDelete();
+            $table->foreignId('siswa_id')->constrained('siswas')->cascadeOnDelete();
+            $table->string('jawaban');
+            $table->boolean('is_benar');
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('jawaban_tugas');
+    }
+};
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::table('nilai_tugas', function (Blueprint $table) {
+            $table->enum('status', ['mengerjakan', 'tidak_mengerjakan', 'selesai'])->default('mengerjakan')->change();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('nilai_tugas', function (Blueprint $table) {
+            $table->enum('status', ['mengerjakan', 'tidak_mengerjakan'])->default('mengerjakan')->change();
+        });
+    }
+};
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('perilakus', function (Blueprint $table) {
+            $table->id();
+            $table->string('nama_perilaku');
+            $table->enum('jenis', ['positif', 'negatif']);
+            $table->integer('poin');
+            $table->boolean('status_aktif')->default(true);
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('perilakus');
+    }
+};
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('perilaku_siswas', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('siswa_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('perilaku_id')->constrained('perilakus')->cascadeOnDelete();
+            $table->foreignId('guru_id')->constrained()->cascadeOnDelete();
+            $table->date('tanggal');
+            $table->text('catatan')->nullable();
+            $table->timestamps();
+
+            $table->index(['siswa_id', 'tanggal']);
+            $table->index(['guru_id', 'tanggal']);
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('perilaku_siswas');
+    }
+};
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration {
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('early_warning_results', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('siswa_id')->constrained('siswas')->cascadeOnDelete();
+            $table->foreignId('kelas_id')->constrained('kelas')->cascadeOnDelete();
+            $table->foreignId('semester_id')->constrained('semesters')->cascadeOnDelete();
+            $table->foreignId('generated_by')->comment('User ID Guru Bk yang klik Generate SAW')->constrained('users')->cascadeOnDelete();
+            $table->decimal('c1_akademik', 5,2)->default(0)->comment('Rata-rata (rata2 tugas + rata2 ujian) / 2');
+            $table->decimal('c2_absensi_harian', 5,2)->default(0)->comment('Rata-rata konversi status absen harian');
+            $table->decimal('c3_absensi_mapel', 5,2)->default(0)->comment('Rata-rata konversi status absen mapel');
+            $table->decimal('c4_perilaku', 5,2)->default(0)->comment('max(0,100 - total_point_negatif)');
+            $table->decimal('total_perilaku_negatif', 5,2)->default(0)->comment('Total Akumulasi Point Negatif semester ini');
+            $table->decimal('total_perilaku_positif', 5,2)->default(0)->comment('Total Akumulasi Point Positif semester ini');
+            $table->decimal('r1_akademik', 6,4)->default(0);
+            $table->decimal('r2_absensi_harian', 6,4)->default(0);
+            $table->decimal('r3_absensi_mapel', 6,4)->default(0);
+            $table->decimal('r4_perilaku', 6,4)->default(0);
+            $table->decimal('skor_akhir', 6,4)->default(0);
+            $table->enum('kategori', ['aman', 'perhatian', 'binaan']);
+            $table->timestamp('generated_at')->nullable();
+            $table->timestamps();
+            $table->unique(['siswa_id', 'semester_id'], 'unique_siswa_semester');
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('early_warning_results');
+    }
+};
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::table('early_warning_results', function (Blueprint $table) {
+            $table->boolean('data_tidak_lengkap')->default(false)->after('kategori');
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::table('early_warning_results', function (Blueprint $table) {
+            $table->dropColumn('data_tidak_lengkap');
+        });
+    }
+};
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration {
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('ai_recommendations', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('semester_id')->constrained('semesters')->cascadeOnDelete();
+            $table->enum('scope', ['kelas', 'siswa']);
+            $table->unsignedBigInteger('scope_id');
+            $table->enum('kategori', ['binaan', 'perhatian', 'aman']);
+            $table->json('rekomendasi');
+            $table->string('provider_used')->default('ai_studio_1')->comment('ai_studio_1, ai_studio_2');
+            $table->timestamp('generated_at')->nullable();
+            $table->unique(['scope', 'scope_id', 'semester_id', 'kategori'], 'unique_scope_semester_kategori');
+            $table->index(['scope', 'scope_id', 'semester_id']);
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('ai_recommendations');
+    }
+};
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        // MySQL tidak bisa drop index yang kolom-nya dipakai FK
+        // Solusi: drop FK dulu â†’ drop index â†’ recreate FK â†’ tambah index baru
+
+        // Step 1: Drop FK yang pakai siswa_id
+        DB::statement('ALTER TABLE early_warning_results DROP FOREIGN KEY early_warning_results_siswa_id_foreign');
+
+        // Step 2: Baru bisa drop unique index
+        DB::statement('ALTER TABLE early_warning_results DROP INDEX unique_siswa_semester');
+
+        // Step 3: Recreate FK siswa_id
+        DB::statement('ALTER TABLE early_warning_results ADD CONSTRAINT early_warning_results_siswa_id_foreign FOREIGN KEY (siswa_id) REFERENCES siswas(id) ON DELETE CASCADE');
+
+        // Step 4: Tambah unique constraint baru (support snapshot harian)
+        DB::statement('ALTER TABLE early_warning_results ADD UNIQUE KEY unique_siswa_semester_tanggal (siswa_id, semester_id, tanggal_hitung)');
+    }
+
+    public function down(): void
+    {
+        DB::statement('ALTER TABLE early_warning_results DROP FOREIGN KEY early_warning_results_siswa_id_foreign');
+        DB::statement('ALTER TABLE early_warning_results DROP INDEX unique_siswa_semester_tanggal');
+        DB::statement('ALTER TABLE early_warning_results ADD CONSTRAINT early_warning_results_siswa_id_foreign FOREIGN KEY (siswa_id) REFERENCES siswas(id) ON DELETE CASCADE');
+        DB::statement('ALTER TABLE early_warning_results ADD UNIQUE KEY unique_siswa_semester (siswa_id, semester_id)');
+    }
+};

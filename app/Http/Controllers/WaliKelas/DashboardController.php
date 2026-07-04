@@ -50,16 +50,21 @@ class DashboardController extends Controller
                 'total' => $snapshot->count(),
             ];
 
-            // SEMUA siswa di kelas itu (wali kelas cuma 1 kelas, tidak perlu limit top-N)
-            $siswaTerurut = $this->snapshotService->urutkanPrioritas($snapshot)
-                ->map(function ($item) use ($semester) {
-                    $item->trend_harian = $this->snapshotService->trendHarian(
-                        $item->siswa_id,
-                        $semester->id,
-                        $item->tanggal_hitung
-                    );
-                    return $item;
-                });
+            $siswaTerurut = $this->snapshotService->urutkanPrioritas($snapshot);
+
+            $tanggalTerbaru = $snapshot->first()->tanggal_hitung ?? null;
+            $trendsBatch = $tanggalTerbaru
+                ? $this->snapshotService->trendHarianBatch(
+                    $siswaTerurut->pluck('siswa_id')->filter()->values()->toArray(),
+                    $semester->id,
+                    $tanggalTerbaru
+                )
+                : collect();
+
+            $siswaTerurut = $siswaTerurut->map(function ($item) use ($trendsBatch) {
+                $item->trend_harian = $trendsBatch->get($item->siswa_id, ['arah' => 'tetap', 'selisih' => 0.0, 'skor_sebelumnya' => null]);
+                return $item;
+            });
 
             $trendMingguanKelas = $this->snapshotService->trendMingguan($kelas->id, $semester->id);
         }

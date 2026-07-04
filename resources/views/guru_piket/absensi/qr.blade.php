@@ -133,8 +133,7 @@
                             ],
                         ])
 
-                        <div class="mb-6 {{ !$isOnDutyToday ? 'opacity-60' : '' }}" id="jamMaksimalDiv"
-                            style="{{ request('tipe') != 'pulang' ? '' : 'display: none;' }}">
+                        <div class="mb-6 {{ !$isOnDutyToday ? 'opacity-60' : '' }} {{ request('tipe') == 'pulang' ? 'hidden' : '' }}" id="jamMaksimalDiv"
                             @php
                                 $jamMaksimalValue = request('jam_maksimal', '08:00');
                                 [$jamVal, $menitVal] = explode(':', $jamMaksimalValue);
