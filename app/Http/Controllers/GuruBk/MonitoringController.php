@@ -149,13 +149,25 @@ class MonitoringController extends Controller
         $guruId = $this->getGuruId();
 
         $this->pastikanKelasDiampu($kelas->id, $guruId, $semester->id);
-        abort_unless($siswa->kelas_id === $kelas->id, 404);
 
-        $hasilTerbaru = $this->snapshotService->latestSnapshotPerSiswa($siswa->id, $semester->id);
+        abort_unless(
+            (int) $siswa->kelas_id === (int) $kelas->id,
+            404
+        );
+
+        $hasilTerbaru = $this->snapshotService->latestSnapshotPerSiswa(
+            $siswa->id,
+            $semester->id
+        );
+
         $hasilTerbaru?->loadMissing('siswa');
 
         $trendHarian = $hasilTerbaru
-            ? $this->snapshotService->trendHarian($siswa->id, $semester->id, $hasilTerbaru->tanggal_hitung)
+            ? $this->snapshotService->trendHarian(
+                $siswa->id,
+                $semester->id,
+                $hasilTerbaru->tanggal_hitung
+            )
             : null;
 
         $rekomendasiAi = $hasilTerbaru
@@ -164,7 +176,12 @@ class MonitoringController extends Controller
 
         [$dari, $sampai] = $this->resolveRangeTanggal($request);
 
-        $riwayat = $this->snapshotService->riwayatSiswa($siswa->id, $semester->id, $dari, $sampai);
+        $riwayat = $this->snapshotService->riwayatSiswa(
+            $siswa->id,
+            $semester->id,
+            $dari,
+            $sampai
+        );
 
         return view('guru_bk.monitoring.siswa', compact(
             'kelas',
@@ -178,7 +195,6 @@ class MonitoringController extends Controller
             'sampai'
         ));
     }
-
     private function resolveRangeTanggal(Request $request): array
     {
         $customDari = $request->query('dari');

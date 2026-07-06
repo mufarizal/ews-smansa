@@ -30,6 +30,7 @@ from konfigurasi.pengaturan import (
 )
 from koneksi.database import koneksi_cursor
 from data.tabel import (
+    ambil_semester_aktif,
     ambil_bab_per_gmk,
     ambil_id_perilaku,
     ambil_jadwal_harian,
@@ -75,7 +76,7 @@ def buat_absensi(cursor, tanggal, jadwal, siswa_ids):
         if status in ("hadir", "terlambat"):
             jam_masuk = f"{tanggal.strftime('%Y-%m-%d')} {jadwal['jam_mulai']}"
 
-cursor.execute(
+        cursor.execute(
              """
              INSERT INTO absensis
                  (siswa_id, tanggal, tipe, guru_id, mapel_id, status, jam_masuk, terlambat_menit, sudah_disetujui, is_simulated, created_at, updated_at)
@@ -141,7 +142,8 @@ def buat_tugas_dan_nilai(cursor, tanggal, jadwal, siswa_ids, bab_ids, materi_per
         else:
             nilai = None
             status = "tidak_mengerjakan"
-cursor.execute(
+
+        cursor.execute(
              """
              INSERT INTO nilai_tugas (tugas_id, siswa_id, nilai, status, is_simulated, created_at, updated_at)
              VALUES (%s, %s, %s, %s, 1, NOW(), NOW())
@@ -188,10 +190,10 @@ def buat_ujian_dan_hasil(cursor, tanggal, jadwal, siswa_ids, bab_ids):
         benar = random.randint(3, JUMLAH_SOAL_UJIAN)
         salah = JUMLAH_SOAL_UJIAN - benar
         nilai = round((benar / JUMLAH_SOAL_UJIAN) * 100, 2)
-cursor.execute(
+        cursor.execute(
              """
              INSERT INTO hasil_ujians
-                 (ujian_harian_id, siswa_id, jumlah_benar, jumlah_salah, nilai, is_simulated, created_at, updated_at)
+                 (ujian_jarian_id, siswa_id, jumlah_benar, jumlah_salah, nilai, is_simulated, created_at, updated_at)
              VALUES (%s, %s, %s, %s, %s, 1, NOW(), NOW())
              """,
              (ujian_id, siswa_id, benar, salah, nilai),
@@ -234,7 +236,7 @@ def buat_perilaku(cursor, tanggal, jadwal, siswa_ids, positif_ids, negatif_ids):
         else:
             perilaku_id = random.choice(negatif_ids)
 
-cursor.execute(
+        cursor.execute(
              """
              INSERT INTO perilaku_siswas (siswa_id, perilaku_id, guru_id, tanggal, catatan, is_simulated, created_at, updated_at)
              VALUES (%s, %s, %s, %s, NULL, 1, NOW(), NOW())

@@ -12,7 +12,6 @@ Tanggung jawab:
 
 import os
 from contextlib import contextmanager
-
 try:
     import mysql.connector
     from mysql.connector import Error
@@ -23,11 +22,11 @@ except ImportError as exc:
     ) from exc
 
 CONFIG_DB = {
-    "host": os.environ.get("DB_HOST", "127.0.0.1"),
-    "port": int(os.environ.get("DB_PORT", 3307)),
-    "user": os.environ.get("DB_USER", "root"),
-    "password": os.environ.get("DB_PASSWORD", "root"),
-    "database": os.environ.get("DB_DATABASE", "ews_smansa"),
+    "host": os.environ.get("DB_HOST", "localhost"),
+    "port": int(os.environ.get("DB_PORT", 3306)),
+    "user": os.environ.get("DB_USER", "sistem16_ews_smansa"),
+    "password": os.environ.get("DB_PASSWORD", "ews_smansa1"),
+    "database": os.environ.get("DB_DATABASE", "sistem16_ews_smansa"),
 }
 
 

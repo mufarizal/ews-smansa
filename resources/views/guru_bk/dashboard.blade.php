@@ -2,6 +2,16 @@
 @section('title', 'Dashboard Guru BK')
 
 @section('content')
+    @if (session('success'))
+        <div class="mb-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+            {{ session('success') }}
+        </div>
+    @endif
+    @if (session('error'))
+        <div class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            {{ session('error') }}
+        </div>
+    @endif
     <div class="mx-auto max-w-7xl space-y-6">
 
         {{-- Page Header --}}
@@ -200,36 +210,47 @@
                     $isStale = $kelasStale->contains('kelas_id', $gbk->kelas_id);
                     $isBelum = $kelasBelumGenerate->contains('kelas_id', $gbk->kelas_id);
                 @endphp
-                <div
-                    class="overflow-hidden rounded-xl border {{ $isStale || $isBelum ? 'border-amber-200' : 'border-gray-200' }} bg-white hover:border-pink-300 hover:shadow-sm transition-all">
-                    @php $siswaPreview = $perKelas['siswa_terburuk']->take(5); @endphp
-                    <div class="flex items-center justify-between gap-3 border-b border-gray-100 bg-gray-50 px-5 py-3.5">
-                        <div class="flex items-center gap-2.5">
-                            <div
-                                class="flex h-8 w-8 items-center justify-center rounded-full bg-pink-100 text-pink-700 font-bold text-xs shrink-0">
-                                {{ strtoupper(substr($gbk->kelas->nama_kelas ?? '?', 0, 2)) }}
-                            </div>
-                            <div>
-                                <h3 class="font-semibold text-gray-900 group-hover:text-pink-700 transition-colors">
-                                    {{ $gbk->kelas->nama_kelas ?? '-' }}
-                                </h3>
-                                <div class="mt-1 flex flex-wrap items-center gap-1.5">
-                                    @if ($isBelum)
-                                        <span class="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">Belum
-                                            generate</span>
-                                    @elseif ($isStale)
-                                        <span
-                                            class="rounded-full bg-amber-50 border border-amber-200 px-2 py-0.5 text-xs text-amber-700">Stale</span>
-                                    @endif
-                                    @include('partials.trend-mingguan-badge', ['trend' => $trendMingguan])
-                                </div>
-                            </div>
-                        </div>
-                        <a href="{{ route('guru_bk.monitoring.show', $gbk->kelas_id) }}"
-                            class="text-xs font-medium text-pink-700 hover:text-pink-800 transition-colors shrink-0 ml-2">
-                            Lihat semua siswa →
-                        </a>
-                    </div>
+<div
+                     class="overflow-hidden rounded-xl border {{ $isStale || $isBelum ? 'border-amber-200' : 'border-gray-200' }} bg-white hover:border-pink-300 hover:shadow-sm transition-all">
+                     @php $siswaPreview = $perKelas['siswa_terburuk']->take(5); @endphp
+                     <div class="flex items-center justify-between gap-3 border-b border-gray-100 bg-gray-50 px-5 py-3.5">
+                         <div class="flex items-center gap-2.5">
+                             <div
+                                 class="flex h-8 w-8 items-center justify-center rounded-full bg-pink-100 text-pink-700 font-bold text-xs shrink-0">
+                                 {{ strtoupper(substr($gbk->kelas->nama_kelas ?? '?', 0, 2)) }}
+                             </div>
+                             <div>
+                                 <h3 class="font-semibold text-gray-900 group-hover:text-pink-700 transition-colors">
+                                     {{ $gbk->kelas->nama_kelas ?? '-' }}
+                                 </h3>
+                                 <div class="mt-1 flex flex-wrap items-center gap-1.5">
+                                     @if ($isBelum)
+                                         <span class="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">Belum
+                                             generate</span>
+                                     @elseif ($isStale)
+                                         <span
+                                             class="rounded-full bg-amber-50 border border-amber-200 px-2 py-0.5 text-xs text-amber-700">Stale</span>
+                                     @endif
+                                     @include('partials.trend-mingguan-badge', ['trend' => $trendMingguan])
+                                 </div>
+                             </div>
+                         </div>
+                         <div class="flex items-center gap-2 shrink-0">
+                             <a href="{{ route('guru_bk.monitoring.show', $gbk->kelas_id) }}"
+                                 class="text-xs font-medium text-pink-700 hover:text-pink-800 transition-colors">
+                                 Lihat semua siswa →
+                             </a>
+                             <form method="POST" action="{{ route('guru_bk.monitoring.generate-ai', $gbk->kelas_id) }}"
+                                 onsubmit="return confirm('Generate SAW dan AI untuk kelas {{ $gbk->kelas->nama_kelas }}?')">
+                                 @csrf
+                                 <button type="submit"
+                                     class="inline-flex items-center justify-center rounded-lg border border-pink-200 bg-pink-50 px-2 py-1 text-xs font-medium text-pink-700 hover:bg-pink-100 transition-colors"
+                                     title="Generate AI untuk kelas ini">
+                                     Generate AI
+                                 </button>
+                             </form>
+                         </div>
+                     </div>
 
                     <div class="px-5 py-4">
                         @if ($siswaPreview->isEmpty())

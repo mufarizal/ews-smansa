@@ -53,6 +53,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/', [MonitoringController::class, 'index'])->name('index');
             Route::get('/{kelas}',[MonitoringController::class, 'show'])->name('show');
             Route::get('/{kelas}/siswa/{siswa}', [MonitoringController::class, 'showSiswa'])->name('siswa');
+            Route::post('/{kelas}/generate-ai', [MonitoringController::class, 'generateAi'])->name('generate-ai');
         });
     });
 

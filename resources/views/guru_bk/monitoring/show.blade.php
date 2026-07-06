@@ -2,6 +2,16 @@
 @section('title', 'Monitoring SAW — ' . ($kelas->nama_kelas ?? 'Kelas'))
 
 @section('content')
+    @if (session('success'))
+        <div class="mb-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+            {{ session('success') }}
+        </div>
+    @endif
+    @if (session('error'))
+        <div class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            {{ session('error') }}
+        </div>
+    @endif
     <div class="mx-auto max-w-7xl space-y-6">
 
         {{-- Page Header --}}
@@ -43,6 +53,14 @@
                         {{ $f['label'] }}
                     </a>
                 @endforeach
+                <form method="POST" action="{{ route('guru_bk.monitoring.generate-ai', $kelas->id) }}"
+                    onsubmit="return confirm('Generate SAW dan AI untuk kelas {{ $kelas->nama_kelas }}? Ini akan menghitung ulang data terbaru.')">
+                    @csrf
+                    <button type="submit"
+                        class="inline-flex items-center justify-center rounded-lg border border-pink-200 bg-pink-50 px-3 py-1.5 text-xs font-medium text-pink-700 hover:bg-pink-100 transition-colors">
+                        Generate AI
+                    </button>
+                </form>
             </div>
         </div>
 
