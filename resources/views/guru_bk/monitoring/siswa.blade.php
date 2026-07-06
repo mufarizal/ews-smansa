@@ -2,7 +2,7 @@
 @section('title', 'Monitoring Siswa — ' . ($siswa->nama ?? 'Detail'))
 
 @section('content')
-    <div class="mx-auto max-w-7xl space-y-6" x-data="{ openAiModal: false }">
+    <div class="mx-auto max-w-7xl space-y-6">
 
         {{-- Page Header --}}
         <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -72,90 +72,92 @@
         @endif
 
         {{-- Rekomendasi AI --}}
-        <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <h3 class="text-sm font-semibold text-gray-900">Rekomendasi AI</h3>
-                    <p class="mt-1 text-xs text-gray-500">Detail dibuka dalam modal agar tetap rapi di mobile dan desktop.
-                    </p>
+        @if ($rekomendasiAi)
+            <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-900">Rekomendasi AI</h3>
+                        <p class="mt-1 text-xs text-gray-500">Hasil analisis dan saran untuk siswa ini.
+                        </p>
+                    </div>
+                    @if ($aiRekomendasiHistory->count() > 1)
+                        <form method="GET" action="{{ route('guru_bk.monitoring.siswa', [$kelas->id, $siswa->id]) }}"
+                            class="flex items-center gap-2">
+                            <input type="hidden" name="range" value="{{ request('range') }}">
+                            <input type="hidden" name="dari" value="{{ request('dari') }}">
+                            <input type="hidden" name="sampai" value="{{ request('sampai') }}">
+                            <select name="ai_filter_id" onchange="this.form.submit()"
+                                class="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-700 focus:border-pink-600 focus:ring-2 focus:ring-pink-100">
+                                <option value="">Rekomendasi Terbaru</option>
+                                @foreach ($aiRekomendasiHistory as $record)
+                                    @php
+                                        $isSelected = $aiFilterId == $record->id;
+                                    @endphp
+                                    <option value="{{ $record->id }}" @if($isSelected) selected @endif>
+                                        {{ $record->provider_used ?? 'unknown' }} —
+                                        {{ \Carbon\Carbon::parse($record->generated_at)->translatedFormat('d M Y H:i') }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </form>
+                    @endif
                 </div>
-                <button type="button" @click="openAiModal = true"
-                    class="inline-flex items-center justify-center rounded-lg border border-pink-200 bg-pink-50 px-4 py-2 text-xs font-semibold text-pink-700 transition hover:bg-pink-100">
-                    Lihat hasil generate AI
-                </button>
-            </div>
 
-@if ($rekomendasiAi)
-                 <div class="mt-3 flex flex-wrap items-center gap-2 text-xs text-gray-500">
-                     @if (!empty($rekomendasiAi['generated_at']))
-                         <span>Terakhir diperbarui
-                             {{ \Carbon\Carbon::parse($rekomendasiAi['generated_at'])->diffForHumans() }}</span>
-                     @endif
-                 </div>
-             @else
+                @if (!empty($rekomendasiAi['generated_at']))
+                    <div class="mt-3 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                        <span>Terakhir diperbarui
+                            {{ \Carbon\Carbon::parse($rekomendasiAi['generated_at'])->diffForHumans() }}</span>
+                        @if (!empty($rekomendasiAi['provider_used']))
+                            <span class="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-600">
+                                {{ $rekomendasiAi['provider_used'] }}
+                            </span>
+                        @endif
+                    </div>
+                @endif
+
+                <div class="mt-4 grid gap-4 lg:grid-cols-2">
+                    <div class="rounded-xl border border-rose-200 bg-rose-50 p-4">
+                        <p class="text-sm font-semibold text-rose-800 mb-2">Penyebab
+                            <span class="ml-2 rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-rose-700">{{ count($rekomendasiAi['penyebab'] ?? []) }} poin</span>
+                        </p>
+                        @if (!empty($rekomendasiAi['penyebab']))
+                            <ul class="space-y-2 text-sm text-rose-900">
+                                @foreach ($rekomendasiAi['penyebab'] as $item)
+                                    <li class="rounded-lg bg-white/80 px-3 py-2">{{ $item }}</li>
+                                @endforeach
+                            </ul>
+                        @else
+                            <p class="mt-3 text-sm text-rose-900">Tidak ada rincian penyebab.</p>
+                        @endif
+                    </div>
+
+                    <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+                        <p class="text-sm font-semibold text-emerald-800 mb-2">Saran
+                            <span class="ml-2 rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-emerald-700">{{ count($rekomendasiAi['saran'] ?? []) }} poin</span>
+                        </p>
+                        @if (!empty($rekomendasiAi['saran']))
+                            <ul class="space-y-2 text-sm text-emerald-900">
+                                @foreach ($rekomendasiAi['saran'] as $item)
+                                    <li class="rounded-lg bg-white/80 px-3 py-2">{{ $item }}</li>
+                                @endforeach
+                            </ul>
+                        @else
+                            <p class="mt-3 text-sm text-emerald-900">Tidak ada saran yang diberikan.</p>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        @else
+            <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-900">Rekomendasi AI</h3>
+                        <p class="mt-1 text-xs text-gray-500">Hasil rekomendasi akan muncul otomatis setelah analisis selesai dihitung.
+                        </p>
+                    </div>
+                </div>
                 <div class="mt-3">
                     @include('partials.saw-rekomendasi-empty')
-                </div>
-            @endif
-        </div>
-
-        @if ($rekomendasiAi)
-            <div x-show="openAiModal" x-cloak class="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center">
-                <div class="absolute inset-0 bg-slate-950/50" @click="openAiModal = false"></div>
-                <div class="relative z-10 w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-2xl">
-                    <div class="flex items-start justify-between gap-4 border-b border-gray-100 px-5 py-4 sm:px-6">
-                        <div>
-                            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Rekomendasi AI</p>
-                            <h3 class="mt-1 text-lg font-bold text-gray-900">{{ $siswa->nama ?? '-' }}</h3>
-                            <p class="mt-1 text-sm text-gray-500">Kelas {{ $kelas->nama_kelas ?? '-' }} · NIS
-                                {{ $siswa->nis ?? '-' }}</p>
-                        </div>
-                        <button type="button" @click="openAiModal = false"
-                            class="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:bg-gray-50">
-                            <i class="ti ti-x text-base"></i>
-                        </button>
-                    </div>
-
-<div class="max-h-[75vh] overflow-y-auto px-5 py-5 sm:px-6">
-                        <div class="space-y-4">
-                            <div class="rounded-xl border border-rose-200 bg-rose-50 p-4">
-                                <p class="text-sm font-semibold text-rose-800 mb-2">Penyebab
-                                    <span class="ml-2 rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-rose-700">{{ count($rekomendasiAi['penyebab'] ?? []) }} poin</span>
-                                </p>
-                                @if (!empty($rekomendasiAi['penyebab']))
-                                    <ul class="space-y-2 text-sm text-rose-900">
-                                        @foreach ($rekomendasiAi['penyebab'] as $item)
-                                            <li class="rounded-lg bg-white/80 px-3 py-2">{{ $item }}</li>
-                                        @endforeach
-                                    </ul>
-                                @else
-                                    <p class="mt-3 text-sm text-rose-900">Tidak ada rincian penyebab.</p>
-                                @endif
-                            </div>
-
-                            <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-                                <p class="text-sm font-semibold text-emerald-800 mb-2">Saran
-                                    <span class="ml-2 rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-emerald-700">{{ count($rekomendasiAi['saran'] ?? []) }} poin</span>
-                                </p>
-                                @if (!empty($rekomendasiAi['saran']))
-                                    <ul class="space-y-2 text-sm text-emerald-900">
-                                        @foreach ($rekomendasiAi['saran'] as $item)
-                                            <li class="rounded-lg bg-white/80 px-3 py-2">{{ $item }}</li>
-                                        @endforeach
-                                    </ul>
-                                @else
-                                    <p class="mt-3 text-sm text-emerald-900">Tidak ada saran yang diberikan.</p>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="flex items-center justify-end gap-2 border-t border-gray-100 px-5 py-4 sm:px-6">
-                        <button type="button" @click="openAiModal = false"
-                            class="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                            Tutup
-                        </button>
-                    </div>
                 </div>
             </div>
         @endif

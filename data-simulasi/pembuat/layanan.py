@@ -78,7 +78,7 @@ def buat_absensi(cursor, tanggal, jadwal, siswa_ids):
 
         cursor.execute(
              """
-             INSERT INTO absensis
+             INSERT IGNORE INTO absensis
                  (siswa_id, tanggal, tipe, guru_id, mapel_id, status, jam_masuk, terlambat_menit, sudah_disetujui, is_simulated, created_at, updated_at)
              VALUES (%s, %s, 'mapel', %s, %s, %s, %s, %s, 1, 1, NOW(), NOW())
              """,
@@ -145,7 +145,7 @@ def buat_tugas_dan_nilai(cursor, tanggal, jadwal, siswa_ids, bab_ids, materi_per
 
         cursor.execute(
              """
-             INSERT INTO nilai_tugas (tugas_id, siswa_id, nilai, status, is_simulated, created_at, updated_at)
+             INSERT IGNORE INTO nilai_tugas (tugas_id, siswa_id, nilai, status, is_simulated, created_at, updated_at)
              VALUES (%s, %s, %s, %s, 1, NOW(), NOW())
              """,
              (tugas_id, siswa_id, nilai, status),
@@ -192,8 +192,8 @@ def buat_ujian_dan_hasil(cursor, tanggal, jadwal, siswa_ids, bab_ids):
         nilai = round((benar / JUMLAH_SOAL_UJIAN) * 100, 2)
         cursor.execute(
              """
-             INSERT INTO hasil_ujians
-                 (ujian_jarian_id, siswa_id, jumlah_benar, jumlah_salah, nilai, is_simulated, created_at, updated_at)
+             INSERT IGNORE INTO hasil_ujians
+                 (ujian_harian_id, siswa_id, jumlah_benar, jumlah_salah, nilai, is_simulated, created_at, updated_at)
              VALUES (%s, %s, %s, %s, %s, 1, NOW(), NOW())
              """,
              (ujian_id, siswa_id, benar, salah, nilai),
@@ -238,7 +238,7 @@ def buat_perilaku(cursor, tanggal, jadwal, siswa_ids, positif_ids, negatif_ids):
 
         cursor.execute(
              """
-             INSERT INTO perilaku_siswas (siswa_id, perilaku_id, guru_id, tanggal, catatan, is_simulated, created_at, updated_at)
+             INSERT IGNORE INTO perilaku_siswas (siswa_id, perilaku_id, guru_id, tanggal, catatan, is_simulated, created_at, updated_at)
              VALUES (%s, %s, %s, %s, NULL, 1, NOW(), NOW())
              """,
              (siswa_id, perilaku_id, jadwal["guru_id"], tanggal),

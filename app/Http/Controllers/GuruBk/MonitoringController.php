@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\GuruBk;
 
+use App\Exports\MonitoringSiswaExport;
 use App\Http\Controllers\Controller;
+use App\Models\AiRecommendation;
 use App\Models\GuruBkKelas;
 use App\Models\Kelas;
 use App\Models\Semester;
@@ -11,17 +13,16 @@ use App\Service\EwsSnapshotService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Maatwebsite\Excel\Facades\Excel;
 
 class MonitoringController extends Controller
 {
-    public function __construct(private EwsSnapshotService $snapshotService)
-    {
-    }
+    public function __construct(private EwsSnapshotService $snapshotService) {}
 
     private function getGuruId(): int
     {
         $guru = Auth::user()->guru;
-        abort_if(!$guru, 403, 'Data guru tidak ditemukan.');
+        abort_if(! $guru, 403, 'Data guru tidak ditemukan.');
 
         return $guru->id;
     }
@@ -93,10 +94,10 @@ class MonitoringController extends Controller
             : collect();
 
         $siswaTerurut = $siswaKelas
-            ->map(function ($siswa) use ($snapshotBySiswaId, $semester, $trendsBatch) {
+            ->map(function ($siswa) use ($snapshotBySiswaId, $trendsBatch) {
                 $item = $snapshotBySiswaId->get($siswa->id);
 
-                if (!$item) {
+                if (! $item) {
                     return (object) [
                         'siswa_id' => $siswa->id,
                         'siswa' => $siswa,
@@ -114,10 +115,10 @@ class MonitoringController extends Controller
                 return $item;
             })
             ->when($kategoriFilter && in_array($kategoriFilter, ['binaan', 'perhatian', 'aman'], true), function ($collection) use ($kategoriFilter) {
-                return $collection->filter(fn($item) => ($item->kategori ?? null) === $kategoriFilter)->values();
+                return $collection->filter(fn ($item) => ($item->kategori ?? null) === $kategoriFilter)->values();
             })
             ->sortBy(function ($item) {
-                if (!empty($item->snapshot_tidak_ada)) {
+                if (! empty($item->snapshot_tidak_ada)) {
                     return sprintf('99-%s', strtolower($item->siswa->nama ?? ''));
                 }
 
@@ -137,6 +138,21 @@ class MonitoringController extends Controller
             'trendMingguanKelas',
             'kategoriFilter'
         ));
+    }
+
+    public function export(Kelas $kelas, Request $request)
+    {
+        $semester = Semester::where('is_active', true)->firstOrFail();
+        $guruId = $this->getGuruId();
+
+        $this->pastikanKelasDiampu($kelas->id, $guruId, $semester->id);
+
+        $kategoriFilter = $request->query('kategori');
+
+        return Excel::download(
+            new MonitoringSiswaExport($kelas->id, $kategoriFilter),
+            'Monitoring-SAW-'.$kelas->nama_kelas.'-'.Carbon::now()->format('Ymd-His').'.xlsx'
+        );
     }
 
     /**
@@ -174,6 +190,40 @@ class MonitoringController extends Controller
             ? $this->snapshotService->aiRekomendasiSiswa($hasilTerbaru)
             : null;
 
+        $aiFilterId = $request->query('ai_filter_id');
+        if ($aiFilterId && $hasilTerbaru) {
+            $rekomendasiRecord = AiRecommendation::where('id', $aiFilterId)
+                ->where('scope', 'kelas')
+                ->where('scope_id', $hasilTerbaru->kelas_id)
+                ->where('kategori', $hasilTerbaru->kategori)
+                ->where('semester_id', $semester->id)
+                ->first();
+
+            if ($rekomendasiRecord) {
+                $daftar = is_array($rekomendasiRecord->rekomendasi)
+                    ? $rekomendasiRecord->rekomendasi
+                    : json_decode((string) $rekomendasiRecord->rekomendasi, true);
+
+                foreach ($daftar ?? [] as $entry) {
+                    if (($entry['nis'] ?? null) == $siswa->nis) {
+                        $rekomendasiAi = [
+                            'penyebab' => $entry['penyebab'] ?? [],
+                            'saran' => $entry['saran'] ?? [],
+                            'provider_used' => $rekomendasiRecord->provider_used ?? null,
+                            'generated_at' => $rekomendasiRecord->generated_at,
+                        ];
+                        break;
+                    }
+                }
+            }
+        }
+
+        $aiRekomendasiHistory = $hasilTerbaru
+            ? AiRecommendation::untukKelasSekarang($hasilTerbaru->kelas_id)
+                ->filter(fn ($r) => $r->kategori === ($hasilTerbaru->kategori ?? null))
+                ->values()
+            : collect();
+
         [$dari, $sampai] = $this->resolveRangeTanggal($request);
 
         $riwayat = $this->snapshotService->riwayatSiswa(
@@ -190,11 +240,14 @@ class MonitoringController extends Controller
             'hasilTerbaru',
             'trendHarian',
             'rekomendasiAi',
+            'aiFilterId',
+            'aiRekomendasiHistory',
             'riwayat',
             'dari',
             'sampai'
         ));
     }
+
     private function resolveRangeTanggal(Request $request): array
     {
         $customDari = $request->query('dari');
@@ -217,7 +270,7 @@ class MonitoringController extends Controller
 
         $range = (int) $request->query('range', 30);
 
-        if (!in_array($range, [7, 30, 90, 180, 365], true)) {
+        if (! in_array($range, [7, 30, 90, 180, 365], true)) {
             $range = 30;
         }
 

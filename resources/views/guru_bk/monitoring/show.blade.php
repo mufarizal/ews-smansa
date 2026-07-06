@@ -53,14 +53,11 @@
                         {{ $f['label'] }}
                     </a>
                 @endforeach
-                <form method="POST" action="{{ route('guru_bk.monitoring.generate-ai', $kelas->id) }}"
-                    onsubmit="return confirm('Generate SAW dan AI untuk kelas {{ $kelas->nama_kelas }}? Ini akan menghitung ulang data terbaru.')">
-                    @csrf
-                    <button type="submit"
-                        class="inline-flex items-center justify-center rounded-lg border border-pink-200 bg-pink-50 px-3 py-1.5 text-xs font-medium text-pink-700 hover:bg-pink-100 transition-colors">
-                        Generate AI
-                    </button>
-                </form>
+                <a href="{{ route('guru_bk.monitoring.export', $kelas->id) . '?kategori=' . ($kategoriFilter ?? '') }}"
+                    class="inline-flex items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 transition hover:bg-emerald-100">
+                    Export Excel
+                </a>
+
             </div>
         </div>
 

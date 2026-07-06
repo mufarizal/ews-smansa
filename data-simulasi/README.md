@@ -104,6 +104,52 @@ Edit [konfigurasi/pengaturan.py](konfigurasi/pengaturan.py) untuk mengubah:
 - jeda loop service
 - jumlah hari bootstrap default
 
+## Jalankan di Linux / cPanel
+
+Semua kode sudah kompatibel Linux (path relatif, `python3 -m venv`, penulisan log pakai `os.path.join`).
+
+### Opsi 1 — Manual dengan `start.sh` (paling mudah)
+
+```bash
+cd data-simulasi
+chmod +x start.sh
+./start.sh bootstrap 30     # isi histori 30 hari (sekali jalan)
+./start.sh                 # jalankan simulasi (loop terus)
+```
+
+Script otomatis membuat virtualenv, install `requirements.txt`, dan memuat `.env`.
+
+### Opsi 2 — systemd service (VPS root)
+
+Salin `simulasi.service` ke `/etc/systemd/system/`, ganti `USERNAME` dan path, lalu:
+
+```bash
+systemctl daemon-reload
+systemctl enable --now simulasi.service
+journalctl -u simulasi.service -f
+```
+
+### Opsi 3 — cPanel (tanpa akses root)
+
+cPanel umumnya **tidak bisa** menjalankan service 24 jam. Gunakan **Cron Job**
+di cPanel → Cron Jobs. Karena simulator butuh jalan terus, pakai pendekatan
+"background + restart otomatis tiap menit":
+
+```cron
+* * * * * pgrep -f "data-simulasi/simulasi.py" >/dev/null || /bin/bash /home/USERNAME/ews-smansa/data-simulasi/start.sh >> /home/USERNAME/ews-smansa/data-simulasi/logs/cron.log 2>&1
+```
+
+Atau, kalau hanya butuh isi data periodik (bukan real-time), jalankan bootstrap
+via cron setiap hari:
+
+```cron
+0 1 * * * /bin/bash /home/USERNAME/ews-smansa/data-simulasi/start.sh bootstrap 1 >> /home/USERNAME/ews-smansa/data-simulasi/logs/cron.log 2>&1
+```
+
+> Catatan: cPanel shared hosting membatasi `virtualenv`/Python di beberapa paket.
+> Kalau `python3 -m venv` tidak diizinkan, install `mysql-connector-python`
+> global lewat `pip install --user` dan hapus bagian venv di `start.sh`.
+
 ## Catatan
 
 Folder dan file lama sudah dipisahkan dari jalur aktif. Jalur pakai sekarang adalah [inisialisasi.py](inisialisasi.py), [simulasi.py](simulasi.py), dan [utama.py](utama.py).

@@ -21,6 +21,10 @@
                     <a href="?tab=siswa"
                         class="px-4 py-2 text-sm font-medium rounded-lg transition {{ $activeTab === 'siswa' ? 'bg-green-600 text-white' : 'bg-white text-gray-700 border border-gray-300' }}">Data
                         Siswa</a>
+                    <a href="{{ route('wali_kelas.kelas-saya.export') }}"
+                        class="inline-flex items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 transition hover:bg-emerald-100">
+                        Export Excel
+                    </a>
                 </div>
             @endif
         </div>

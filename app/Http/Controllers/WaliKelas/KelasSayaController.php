@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\WaliKelas;
 
+use App\Exports\WaliKelasSiswaExport;
 use App\Http\Controllers\Controller;
 use App\Models\Absensi;
 use App\Models\HasilUjian;
@@ -9,19 +10,19 @@ use App\Models\NilaiTugas;
 use App\Models\PerilakuSiswa;
 use App\Models\Semester;
 use App\Service\EwsSnapshotService;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Maatwebsite\Excel\Facades\Excel;
 
 class KelasSayaController extends Controller
 {
-    public function __construct(private EwsSnapshotService $snapshotService)
-    {
-    }
+    public function __construct(private EwsSnapshotService $snapshotService) {}
 
     public function index()
     {
         $guru = Auth::user()->guru;
 
-        if (!$guru) {
+        if (! $guru) {
             return view('wali_kelas.kelas_saya.index', [
                 'kelas' => null,
                 'semester' => null,
@@ -38,7 +39,7 @@ class KelasSayaController extends Controller
             ->orderBy('nama_kelas')
             ->first();
 
-        if (!$kelas) {
+        if (! $kelas) {
             return view('wali_kelas.kelas_saya.index', [
                 'kelas' => null,
                 'semester' => null,
@@ -59,13 +60,13 @@ class KelasSayaController extends Controller
             ->withAvg('nilaiTugas as nilai_tugas_avg', 'nilai')
             ->withAvg('hasilUjians as nilai_ujian_avg', 'nilai')
             ->withCount([
-                'absensis as total_absensi_count' => fn($q) => $q->where('tipe', Absensi::TIPE_MAPEL),
-                'absensis as hadir_absensi_count' => fn($q) => $q->where('tipe', Absensi::TIPE_MAPEL)->where('status', 'hadir'),
-                'absensis as alpha_absensi_count' => fn($q) => $q->where('tipe', Absensi::TIPE_MAPEL)->where('status', 'alpha'),
-                'absensis as terlambat_absensi_count' => fn($q) => $q->where('tipe', Absensi::TIPE_MAPEL)->where('status', 'terlambat'),
+                'absensis as total_absensi_count' => fn ($q) => $q->where('tipe', Absensi::TIPE_MAPEL),
+                'absensis as hadir_absensi_count' => fn ($q) => $q->where('tipe', Absensi::TIPE_MAPEL)->where('status', 'hadir'),
+                'absensis as alpha_absensi_count' => fn ($q) => $q->where('tipe', Absensi::TIPE_MAPEL)->where('status', 'alpha'),
+                'absensis as terlambat_absensi_count' => fn ($q) => $q->where('tipe', Absensi::TIPE_MAPEL)->where('status', 'terlambat'),
                 'perilakuSiswas as catatan_perilaku_count',
             ])
-            ->withSum(['absensis as total_keterlambatan_menit' => fn($q) => $q->where('tipe', Absensi::TIPE_MAPEL)->where('status', 'terlambat')], 'terlambat_menit')
+            ->withSum(['absensis as total_keterlambatan_menit' => fn ($q) => $q->where('tipe', Absensi::TIPE_MAPEL)->where('status', 'terlambat')], 'terlambat_menit')
             ->orderBy('nama')
             ->orderBy('nis')
             ->paginate(20)
@@ -84,13 +85,13 @@ class KelasSayaController extends Controller
             : collect();
 
         $rekomendasiCache = $snapshotPerSiswa
-            ->filter(fn ($s) => !empty($s->kategori))
+            ->filter(fn ($s) => ! empty($s->kategori))
             ->unique(fn ($s) => $s->kelas_id.'|'.$s->kategori)
             ->mapWithKeys(fn ($s) => [
                 $s->kelas_id.'|'.$s->kategori => $this->snapshotService->aiRekomendasiSiswa($s),
             ]);
 
-        $siswa->through(function ($item) use ($snapshotPerSiswa, $semester, $trendsBatch, $rekomendasiCache) {
+        $siswa->through(function ($item) use ($snapshotPerSiswa, $trendsBatch, $rekomendasiCache) {
             $hasilSaw = $snapshotPerSiswa->get($item->id);
 
             $item->saw_kategori = $hasilSaw->kategori ?? null;
@@ -101,7 +102,7 @@ class KelasSayaController extends Controller
                 ? ($trendsBatch->get($item->id) ?? ['arah' => 'tetap', 'selisih' => 0.0, 'skor_sebelumnya' => null])
                 : null;
 
-            $item->saw_ai_rekomendasi = $hasilSaw && !empty($hasilSaw->kategori)
+            $item->saw_ai_rekomendasi = $hasilSaw && ! empty($hasilSaw->kategori)
                 ? ($rekomendasiCache->get($hasilSaw->kelas_id.'|'.$hasilSaw->kategori) ?? null)
                 : null;
 
@@ -122,6 +123,29 @@ class KelasSayaController extends Controller
             'ringkasan',
             'activeTab'
         ));
+    }
+
+    public function export()
+    {
+        $guru = Auth::user()->guru;
+
+        if (! $guru) {
+            abort(403, 'Data guru tidak ditemukan.');
+        }
+
+        $kelas = $guru->kelasDiampu()
+            ->with(['semester'])
+            ->orderBy('nama_kelas')
+            ->first();
+
+        if (! $kelas) {
+            abort(403, 'Anda belum ditetapkan sebagai wali kelas.');
+        }
+
+        return Excel::download(
+            new WaliKelasSiswaExport($kelas->id),
+            'Data-Siswa-'.$kelas->nama_kelas.'-'.Carbon::now()->format('Ymd-His').'.xlsx'
+        );
     }
 
     private function emptyRingkasan(): object

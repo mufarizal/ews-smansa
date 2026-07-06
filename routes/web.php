@@ -1,14 +1,14 @@
 <?php
 
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\GuruBk\DashboardController as GuruBkDashboardController;
 use App\Http\Controllers\GuruBk\MonitoringController;
-use App\Http\Controllers\GuruBk\PointPerilakuController as GuruBkPointPerilakuController;
 use App\Http\Controllers\GuruBk\PengajaranSayaController as GuruBkPengajaranSayaController;
-use App\Http\Controllers\WaliKelas\DashboardController as WaliKelasDashboardController;
-use App\Http\Controllers\WaliKelas\KelasSayaController;
+use App\Http\Controllers\GuruBk\PointPerilakuController as GuruBkPointPerilakuController;
 use App\Http\Controllers\GuruMapel\AbsensiController as GuruMapelAbsensiController;
 use App\Http\Controllers\GuruMapel\BabController;
+use App\Http\Controllers\GuruMapel\DashboardController as GuruMapelDashboardController;
 use App\Http\Controllers\GuruMapel\MateriController;
 use App\Http\Controllers\GuruMapel\PengajaranSayaController;
 use App\Http\Controllers\GuruMapel\PerilakuSiswaController;
@@ -16,6 +16,7 @@ use App\Http\Controllers\GuruMapel\TugasController;
 use App\Http\Controllers\GuruMapel\UjianController;
 use App\Http\Controllers\GuruPiket\DashboardController as GuruPiketDashboardController;
 use App\Http\Controllers\GuruPiket\QRController as GuruPiketQRController;
+use App\Http\Controllers\Kurikulum\DashboardController as KurikulumDashboardController;
 use App\Http\Controllers\Kurikulum\GuruAssignmentController;
 use App\Http\Controllers\Kurikulum\GuruController;
 use App\Http\Controllers\Kurikulum\JadwalController;
@@ -26,6 +27,8 @@ use App\Http\Controllers\Kurikulum\SiswaController as KurikulumSiswaController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Siswa\PembelajaranController;
 use App\Http\Controllers\Siswa\QRController as SiswaQRController;
+use App\Http\Controllers\WaliKelas\DashboardController as WaliKelasDashboardController;
+use App\Http\Controllers\WaliKelas\KelasSayaController;
 use App\Http\Controllers\WaliKelas\PerilakuSiswaController as WaliKelasPerilakuSiswaController;
 use Illuminate\Support\Facades\Route;
 
@@ -35,9 +38,7 @@ Route::get('/', function () {
 
 Route::middleware(['auth'])->group(function () {
     Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
-        Route::get('/dashboard', function () {
-            return view('admin.dashboard');
-        })->name('dashboard');
+        Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
 
         Route::resource('users', UserController::class);
     });
@@ -49,18 +50,17 @@ Route::middleware(['auth'])->group(function () {
 
         Route::resource('point-perilaku', GuruBkPointPerilakuController::class)
             ->parameters(['point-perilaku' => 'perilaku']);
-        Route::prefix('monitoring-perilaku')->name('monitoring.')->group(function (){
+        Route::prefix('monitoring-perilaku')->name('monitoring.')->group(function () {
             Route::get('/', [MonitoringController::class, 'index'])->name('index');
-            Route::get('/{kelas}',[MonitoringController::class, 'show'])->name('show');
+            Route::get('/{kelas}', [MonitoringController::class, 'show'])->name('show');
             Route::get('/{kelas}/siswa/{siswa}', [MonitoringController::class, 'showSiswa'])->name('siswa');
             Route::post('/{kelas}/generate-ai', [MonitoringController::class, 'generateAi'])->name('generate-ai');
+            Route::get('/{kelas}/export', [MonitoringController::class, 'export'])->name('export');
         });
     });
 
     Route::middleware('role:guru_mapel')->prefix('guru_mapel')->name('guru_mapel.')->group(function () {
-        Route::get('/dashboard', function () {
-            return view('guru_mapel.dashboard');
-        })->name('dashboard');
+        Route::get('/dashboard', [GuruMapelDashboardController::class, 'index'])->name('dashboard');
 
         Route::get('/pengajaran-saya', [PengajaranSayaController::class, 'index'])->name('pengajaran-saya.index');
 
@@ -115,9 +115,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::middleware('role:kurikulum')->prefix('kurikulum')->name('kurikulum.')->group(function () {
-        Route::get('/dashboard', function () {
-            return view('kurikulum.dashboard');
-        })->name('dashboard');
+        Route::get('/dashboard', [KurikulumDashboardController::class, 'index'])->name('dashboard');
 
         Route::resource('mapel', MapelController::class);
 
@@ -170,6 +168,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/dashboard', [WaliKelasDashboardController::class, 'index'])->name('dashboard');
 
         Route::get('/kelas-saya', [KelasSayaController::class, 'index'])->name('kelas-saya.index');
+        Route::get('/kelas-saya/export', [KelasSayaController::class, 'export'])->name('kelas-saya.export');
 
         Route::resource('perilaku-siswa', WaliKelasPerilakuSiswaController::class)->names('perilaku-siswa');
     });
@@ -219,4 +218,4 @@ Route::middleware('auth')->group(function () {
 //     )->json();
 
 // });
-require __DIR__ . '/auth.php';
+require __DIR__.'/auth.php';
