@@ -72,7 +72,6 @@ class SiswaController extends Controller
     public function create()
     {
         $kelas = Kelas::orderBy('nama_kelas')->get();
-
         return view('kurikulum.siswa.create', compact('kelas'));
     }
 
@@ -136,7 +135,7 @@ class SiswaController extends Controller
     {
         $request->validate([
             'kelas_id' => 'required|exists:kelas,id',
-            'nis' => 'required|string|max:255|unique:siswas,nis,'.$siswa->id,
+            'nis' => 'required|string|max:255|unique:siswas,nis,' . $siswa->id,
             'nama' => 'required|string|max:255',
             'alamat' => 'nullable|string',
         ]);
@@ -211,12 +210,12 @@ class SiswaController extends Controller
 
         $suffix = '';
         if ($request->filled('kelas_id')) {
-            $suffix = '-kelas-'.$kelas->first()->id;
+            $suffix = '-kelas-' . $kelas->first()->id;
         }
 
         return Excel::download(
             new SiswaTemplateExport($kelas),
-            'template-import-siswa'.$suffix.'-'.now()->format('Ymd_His').'.xlsx'
+            'template-import-siswa' . $suffix . '-' . now()->format('Ymd_His') . '.xlsx'
         );
     }
 
@@ -264,7 +263,7 @@ class SiswaController extends Controller
             }
 
             $kelas = Kelas::find($kelasId);
-            if (! $kelas) {
+            if (!$kelas) {
                 $skipped[] = "Baris {$line}: kelas_id {$kelasId} tidak ditemukan.";
 
                 continue;
@@ -334,7 +333,7 @@ class SiswaController extends Controller
         ]);
 
         $message = "Import selesai: {$created} siswa berhasil ditambahkan.";
-        if (! empty($skipped)) {
+        if (!empty($skipped)) {
             $message .= ' Ada beberapa baris yang dilewati.';
         }
 
@@ -353,7 +352,7 @@ class SiswaController extends Controller
         $kelasId = $request->filled('kelas_id') ? (int) $request->kelas_id : null;
         if ($kelasId !== null) {
             $credentials = $credentials
-                ->filter(fn (array $row) => (int) ($row['kelas_id'] ?? 0) === $kelasId)
+                ->filter(fn(array $row) => (int) ($row['kelas_id'] ?? 0) === $kelasId)
                 ->values();
         }
 
@@ -367,7 +366,7 @@ class SiswaController extends Controller
             session()->forget('siswa_generated_credentials');
         } else {
             $remaining = $allCredentials
-                ->reject(fn (array $row) => (int) ($row['kelas_id'] ?? 0) === $kelasId)
+                ->reject(fn(array $row) => (int) ($row['kelas_id'] ?? 0) === $kelasId)
                 ->values();
 
             if ($remaining->isEmpty()) {
@@ -377,11 +376,11 @@ class SiswaController extends Controller
             }
         }
 
-        $fileSuffix = $kelasId !== null ? '-kelas-'.$kelasId : '';
+        $fileSuffix = $kelasId !== null ? '-kelas-' . $kelasId : '';
 
         return Excel::download(
             new SiswaCredentialsExport($credentials),
-            'akun-login-siswa-import'.$fileSuffix.'-'.now()->format('Ymd_His').'.xlsx'
+            'akun-login-siswa-import' . $fileSuffix . '-' . now()->format('Ymd_His') . '.xlsx'
         );
     }
 
@@ -406,7 +405,7 @@ class SiswaController extends Controller
             $targetText = $kelasLabel ? " pada kelas {$kelasLabel}" : '';
 
             return back()->withErrors([
-                'export_credentials' => 'Belum ada data siswa'.$targetText.' untuk dibuatkan akun login.',
+                'export_credentials' => 'Belum ada data siswa' . $targetText . ' untuk dibuatkan akun login.',
             ]);
         }
 
@@ -414,7 +413,7 @@ class SiswaController extends Controller
         $credentials = [];
 
         foreach ($allSiswa as $siswa) {
-            if (! $siswa->user) {
+            if (!$siswa->user) {
                 continue;
             }
 
@@ -444,15 +443,15 @@ class SiswaController extends Controller
             $targetText = $kelasLabel ? " pada kelas {$kelasLabel}" : '';
 
             return back()->withErrors([
-                'export_credentials' => 'Tidak ada akun user siswa'.$targetText.' yang bisa diproses.',
+                'export_credentials' => 'Tidak ada akun user siswa' . $targetText . ' yang bisa diproses.',
             ]);
         }
 
-        $fileSuffix = $kelasId !== null ? '-kelas-'.$kelasId : '-semua';
+        $fileSuffix = $kelasId !== null ? '-kelas-' . $kelasId : '-semua';
 
         return Excel::download(
             new SiswaCredentialsExport(collect($credentials)),
-            'akun-login-siswa'.$fileSuffix.'-'.now()->format('Ymd_His').'.xlsx'
+            'akun-login-siswa' . $fileSuffix . '-' . now()->format('Ymd_His') . '.xlsx'
         );
     }
 
@@ -476,7 +475,7 @@ class SiswaController extends Controller
     private function generateNisFromKelas(int $kelasId): string
     {
         $kelas = Kelas::find($kelasId);
-        if (! $kelas) {
+        if (!$kelas) {
             return '';
         }
 
@@ -484,17 +483,17 @@ class SiswaController extends Controller
         preg_match('/(\d+)\s*([A-Za-z])/', $kelas->nama_kelas, $m);
         $tingkat = $m[1] ?? '10';
         $nomorHuruf = isset($m[2]) ? (ord(strtoupper($m[2])) - ord('A') + 1) : 1;
-        $kodeKelas = $tingkat.$nomorHuruf;
+        $kodeKelas = $tingkat . $nomorHuruf;
 
         // Nomor absen berikutnya untuk kelas ini
         $absen = Siswa::where('kelas_id', $kelasId)->count() + 1;
 
-        return $kodeKelas.str_pad($absen, 2, '0', STR_PAD_LEFT);
+        return $kodeKelas . str_pad($absen, 2, '0', STR_PAD_LEFT);
     }
 
     private function buildEmailFromNis(string $nis): string
     {
-        return trim($nis).'@'.self::DEFAULT_EMAIL_DOMAIN;
+        return trim($nis) . '@' . self::DEFAULT_EMAIL_DOMAIN;
     }
 
     private function generateReadablePassword(): string

@@ -4,12 +4,15 @@ namespace App\Http\Controllers\Siswa;
 
 use App\Http\Controllers\Controller;
 use App\Models\Absensi;
+use App\Models\AiRecommendation;
+use App\Models\EarlyWarningResult;
 use App\Models\GuruMapelKelas;
 use App\Models\HasilUjian;
 use App\Models\Jadwal;
 use App\Models\JawabanTugas;
 use App\Models\JawabanUjian;
 use App\Models\NilaiTugas;
+use App\Models\PerilakuSiswa;
 use App\Models\Siswa;
 use App\Models\Tugas;
 use App\Models\UjianHarian;
@@ -184,6 +187,34 @@ class PembelajaranController extends Controller
             ->limit(10)
             ->get();
 
+        // --- Data perkembangan (semester aktif) ---
+        $hasilEws = $siswa->hasil_saw_terbaru;
+
+        $rekomendasi = AiRecommendation::untukSiswaSekarang($siswa->id);
+
+        $riwayatEws = EarlyWarningResult::where('siswa_id', $siswa->id)
+            ->semesterAktif()
+            ->orderBy('tanggal_hitung')
+            ->get();
+
+        $rataTugas = $siswa->nilai_tugas_avg;
+        $rataUjian = $siswa->nilai_ujian_avg;
+        $kehadiran = $siswa->kehadiran_persen;
+        $skorPerilaku = $siswa->total_skor_perilaku;
+
+        $perilakuPositif = PerilakuSiswa::where('siswa_id', $siswa->id)
+            ->whereHas('perilaku', fn($q) => $q->where('jenis', 'positif'))
+            ->count();
+        $perilakuNegatif = PerilakuSiswa::where('siswa_id', $siswa->id)
+            ->whereHas('perilaku', fn($q) => $q->where('jenis', 'negatif'))
+            ->count();
+
+        $riwayatPerilaku = PerilakuSiswa::with('perilaku')
+            ->where('siswa_id', $siswa->id)
+            ->orderByDesc('tanggal')
+            ->limit(10)
+            ->get();
+
         return view('siswa.profil.index', compact(
             'siswa',
             'summary',
@@ -193,8 +224,35 @@ class PembelajaranController extends Controller
             'absensiHarian',
             'absensiMapel',
             'bulan',
-            'tahun'
+            'tahun',
+            'hasilEws',
+            'rekomendasi',
+            'riwayatEws',
+            'rataTugas',
+            'rataUjian',
+            'kehadiran',
+            'skorPerilaku',
+            'perilakuPositif',
+            'perilakuNegatif',
+            'riwayatPerilaku'
         ));
+    }
+
+    /**
+     * Hasilkan / perbarui rekomendasi perkembangan untuk siswa yang login.
+     * Memanggil AIService::generateUntukSiswa (prompt khusus siswa).
+     */
+    public function generateSaran(Request $request)
+    {
+        $siswa = $this->getSiswa();
+
+        try {
+            app(\App\Service\AIService::class)->generateUntukSiswa($siswa->id);
+
+            return back()->with('success', 'Saran perkembangan berhasil diperbarui.');
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Gagal memuat saran: ' . $e->getMessage());
+        }
     }
 
     // -----------------------------------------------------------------------

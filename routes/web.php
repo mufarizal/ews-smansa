@@ -176,6 +176,7 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware('role:siswa')->prefix('siswa')->name('siswa.')->group(function () {
         Route::get('/dashboard', [PembelajaranController::class, 'dashboard'])->name('dashboard');
         Route::get('/profil', [PembelajaranController::class, 'profil'])->name('profil.index');
+        Route::post('/profil/generate-saran', [PembelajaranController::class, 'generateSaran'])->name('profil.generate-saran');
 
         Route::get('/absensi/qr', [SiswaQRController::class, 'scan'])->name('qr.scan');
         Route::post('/absensi/qr', [SiswaQRController::class, 'process'])->name('qr.process');

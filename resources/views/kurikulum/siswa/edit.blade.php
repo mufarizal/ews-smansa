@@ -126,7 +126,7 @@
         </div>
     </form>
 
-    <script>
+    {{--  <script>
         const angkatanSelect = document.getElementById('angkatan');
         const kelasSelect = document.getElementById('kelas_id');
 
@@ -155,6 +155,6 @@
 
         angkatanSelect.addEventListener('change', filterKelasByAngkatan);
         filterKelasByAngkatan();
-    </script>
+    </script>  --}}
 
 @endsection

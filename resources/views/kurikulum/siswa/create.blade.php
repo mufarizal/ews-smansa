@@ -90,7 +90,7 @@
         </div>
     </form>
 
-    <script>
+    {{--  <script>
         const kelasSelect = document.getElementById('kelas_id');
 
         function filterKelasByAngkatan() {
@@ -115,6 +115,6 @@
         }
 
         filterKelasByAngkatan();
-    </script>
+    </script>  --}}
 
 @endsection

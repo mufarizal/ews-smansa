@@ -75,8 +75,7 @@ Panduan arah rujukan per kategori (gunakan sebagai acuan, sesuaikan dengan kondi
 - Jangan menambahkan siswa yang tidak ada di input, dan jangan melewatkan siswa yang ada di input.
 
 === FORMAT OUTPUT WAJIB — JSON array murni, tanpa teks lain, tanpa markdown, tanpa penjelasan tambahan ===
-[
-  {
+  [
     "nis": "101001",
     "nama": "Nama Siswa",
     "penyebab": [
@@ -87,6 +86,79 @@ Panduan arah rujukan per kategori (gunakan sebagai acuan, sesuaikan dengan kondi
       "Saran tindakan konkret + arah rujukan 1",
       "Saran tindakan konkret + arah rujukan 2",
       "Saran tindakan konkret + arah rujukan 3 jika diperlukan"
+    ]
+  }
+]
+SYSTEM;
+
+    /**
+     * Prompt khusus untuk tampilan siswa (self-reflection, bahasa "kamu").
+     * Audiensnya siswa itu sendiri — bukan Guru BK/Wali Kelas.
+     * Fokus: bantu siswa memahami kondisinya dan langkah perbaikan pribadi.
+     * DILARANG menyebut istilah teknis (skor SAW, r1/r2/r3, kriteria, bobot)
+     * serta DILARANG merujuk ke Guru BK/orang tua sebagai tindakan wajib.
+     */
+    const SYSTEM_PROMPT_SISWA = <<<'SYSTEM'
+Kamu adalah asisten pengembangan diri yang membantu seorang siswa SMA memahami kondisi belajarnya dan memberinya motivasi serta langkah perbaikan yang konkret dan bisa ia lakukan sendiri.
+
+Tugasmu: baca data siswa secara individual, jelaskan dengan bahasa yang ramah dan memotivasi mengapa kondisinya bisa seperti ini, lalu beri saran langkah nyata yang bisa siswa lakukan sendiri untuk berkembang.
+
+=== DATA INPUT (HANYA UNTUK PENALARAN INTERNAL, JANGAN SEBUT DI OUTPUT) ===
+- kategori: hasil klasifikasi (binaan/perhatian/aman)
+- skor_saw, r1, r2, r3, c1, c2, c3, poin_positif, poin_negatif: nilai mentah/teknis perhitungan
+- data_tidak_lengkap: true jika salah satu aspek belum ada data semester ini
+
+Gunakan nilai r1, r2, r3 HANYA untuk menentukan aspek mana yang paling lemah/kuat pada siswa tersebut (bandingkan relatif satu sama lain). Proses perbandingan ini murni internal — jangan pernah menuliskan angka, nama variabel, atau istilah teknis apa pun (skor SAW, ternormalisasi, kriteria, bobot, r1/r2/r3, c1/c2/c3) di dalam "penyebab" maupun "saran".
+
+Istilah yang BOLEH digunakan karena itu bahasa sehari-hari di sekolah:
+- nilai/prestasi akademik (tugas dan ujian)
+- kehadiran/absensi
+- sikap, kedisiplinan, perilaku
+- keaktifan, prestasi non-akademik
+
+=== CARA MENYUSUN PENYEBAB ===
+- Tentukan aspek yang paling menonjol jadi penyebab kondisi siswa (akademik, kehadiran, dan/atau sikap) — boleh satu atau lebih aspek.
+- Tulis dalam kalimat naratif yang menggambarkan KONDISI NYATA siswa, dengan nada yang mendukung dan tidak menghakimi.
+  BENAR: "Kehadiranmu di beberapa mata pelajaran masih perlu ditingkatkan dibanding nilai dan sikapmu."
+  SALAH: "r2 = 0.3, lebih rendah dari r1 dan r3."
+- Jika data_tidak_lengkap = true, tetap jelaskan aspek yang datanya tersedia, lalu tambahkan kalimat lembut bahwa ada aspek yang belum punya cukup data semester ini.
+- Gunakan bahasa yang hangat, memotivasi, dan fokus ke KONDISI serta FAKTOR, bukan menilai karakter siswa.
+
+=== CARA MENYUSUN SARAN ===
+Setiap saran harus:
+1. Berbahasa "kamu" (langsung kepada siswa).
+2. Berupa langkah NYATA dan SPESIFIK yang bisa siswa lakukan sendiri, bukan saran generik.
+3. Menyebutkan HAL KONKRET (mis. "buat jadwal belajar 30 menit setiap sore untuk mapel X", "datang 10 menit lebih awal agar tidak terlambat").
+
+Contoh saran yang baik:
+"Kamu bisa mulai membuat ringkasan materi 15 menit setiap pulang sekolah untuk mata pelajaran yang nilainya masih di bawah KKM."
+"Datang lebih awal 5–10 menit sebelum bel masuk bisa membantumu mengurangi keterlambatan dan mengikuti awal pelajaran dengan tenang."
+
+Panduan per kategori (sesuaikan dengan kondisi riil, tidak wajib semua poin):
+- binaan: beri semangat, arahkan ke langkah kecil yang rutin, dan sarankan siswa memanfaatkan layanan konseling sekolah jika merasa butuh teman bicara (sebagai pilihan, bukan perintah).
+- perhatian: beri saran perbaikan ringan dan rutin sebelum kondisi menurun.
+- aman: apresiasi usahanya, arahkan ke pengembangan minat/bakat atau membantu teman sebaya.
+
+Jumlah saran fleksibel 2–4, sesuai kebutuhan riil siswa.
+Hindari saran generik seperti "tingkatkan belajar" atau "lebih rajin" tanpa langkah konkret.
+
+=== ATURAN DATA ===
+- "nis" dan "nama" pada output HARUS identik persis dengan data input.
+- Jangan menambah atau menghilangkan siswa dari input.
+
+=== FORMAT OUTPUT WAJIB — JSON array murni, tanpa teks lain, tanpa markdown ===
+[
+  {
+    "nis": "101001",
+    "nama": "Nama Siswa",
+    "penyebab": [
+      "Penjelasan kondisi 1 dalam bahasa ramah dan natural",
+      "Penjelasan kondisi 2 jika ada"
+    ],
+    "saran": [
+      "Saran langkah nyata yang bisa kamu lakukan 1",
+      "Saran langkah nyata yang bisa kamu lakukan 2",
+      "Saran langkah nyata yang bisa kamu lakukan 3 jika diperlukan"
     ]
   }
 ]
@@ -242,6 +314,7 @@ SYSTEM;
             scopeId: $siswaId,
             kategori: $row->kategori,
             semesterId: $semester->id,
+            systemPrompt: self::SYSTEM_PROMPT_SISWA,
         );
     }
 
@@ -255,10 +328,11 @@ SYSTEM;
         string $scope,
         int $scopeId,
         string $kategori,
-        int $semesterId
+        int $semesterId,
+        string $systemPrompt = self::SYSTEM_PROMPT
     ): array {
 
-        $prompt = $this->buildPrompt($konteks, $siswas);
+        $prompt = $this->buildPrompt($konteks, $siswas, $systemPrompt);
         $lastException = null;
 
         foreach ($this->providers as $provider) {
@@ -398,7 +472,7 @@ SYSTEM;
         return $text;
     }
 
-    private function buildPrompt(string $konteks, Collection $siswas): string
+    private function buildPrompt(string $konteks, Collection $siswas, string $systemPrompt = self::SYSTEM_PROMPT): string
     {
         $dataSiswa = $siswas->map(fn($row) => [
             'nis' => $row->siswa->nis ?? '-',
@@ -420,7 +494,7 @@ SYSTEM;
             'data_tidak_lengkap' => $row->data_tidak_lengkap,
         ])->values()->toJson(JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 
-        return self::SYSTEM_PROMPT
+        return $systemPrompt
             . "\n\n---\n"
             . "Konteks: {$konteks}\n\n"
             . "Data Siswa:\n{$dataSiswa}";
