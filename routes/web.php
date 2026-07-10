@@ -22,6 +22,7 @@ use App\Http\Controllers\Kurikulum\GuruController;
 use App\Http\Controllers\Kurikulum\JadwalController;
 use App\Http\Controllers\Kurikulum\KelasController as KurikulumKelasController;
 use App\Http\Controllers\Kurikulum\MapelController;
+use App\Http\Controllers\Kurikulum\PerangkatAjarController;
 use App\Http\Controllers\Kurikulum\SemesterController;
 use App\Http\Controllers\Kurikulum\SiswaController as KurikulumSiswaController;
 use App\Http\Controllers\ProfileController;
@@ -151,6 +152,12 @@ Route::middleware(['auth'])->group(function () {
         });
 
         Route::resource('jadwal', JadwalController::class);
+
+        Route::get('perangkat-ajar', [PerangkatAjarController::class, 'index'])
+            ->name('perangkat-ajar.index');
+
+        Route::get('perangkat-ajar/{mapel}/{guru}', [PerangkatAjarController::class, 'show'])
+            ->name('perangkat-ajar.show');
     });
 
     Route::middleware('role:guru_piket')->prefix('guru_piket')->name('guru_piket.')->group(function () {
@@ -219,4 +226,4 @@ Route::middleware('auth')->group(function () {
 //     )->json();
 
 // });
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

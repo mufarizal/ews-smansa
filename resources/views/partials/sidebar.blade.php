@@ -193,7 +193,7 @@
                         [
                             'icon' => 'book',
                             'label' => 'Perangkat Ajar',
-                            'route' => '#',
+                            'route' => route('kurikulum.perangkat-ajar.index'),
                         ],
                     ],
                 ])
