@@ -200,7 +200,7 @@ class PembelajaranController extends Controller
         }
 
         if ($aiRefreshing || ! $rekomendasi) {
-            GenerateAiRecommendationJob::withDelay(now()->addSeconds(30))->dispatch($siswa->id);
+            GenerateAiRecommendationJob::dispatch($siswa->id)->delay(now()->addSeconds(30));
         }
 
         $riwayatEws = EarlyWarningResult::where('siswa_id', $siswa->id)
