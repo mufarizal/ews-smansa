@@ -17,7 +17,7 @@ class UjianController extends Controller
     private function getGuruMapelKelasIds(): array
     {
         $guru = Auth::user()->guru;
-        abort_if(!$guru, 403, 'Data guru tidak ditemukan.');
+        abort_if(! $guru, 403, 'Data guru tidak ditemukan.');
 
         return GuruMapelKelas::where('guru_id', $guru->id)
             ->pluck('id')
@@ -46,7 +46,7 @@ class UjianController extends Controller
     public function create()
     {
         $guru = Auth::user()->guru;
-        abort_if(!$guru, 403, 'Data guru tidak ditemukan.');
+        abort_if(! $guru, 403, 'Data guru tidak ditemukan.');
 
         $guruMapelKelas = GuruMapelKelas::with(['mapel', 'kelas', 'babs'])
             ->where('guru_id', $guru->id)
@@ -106,7 +106,7 @@ class UjianController extends Controller
     {
         $ids = $this->getGuruMapelKelasIds();
         $guru = Auth::user()->guru;
-        abort_if(!$guru, 403, 'Data guru tidak ditemukan.');
+        abort_if(! $guru, 403, 'Data guru tidak ditemukan.');
 
         abort_unless(in_array($ujianHarian->guru_mapel_kelas_id, $ids), 403);
         abort_if($ujianHarian->status !== 'draft', 422, 'Ujian yang sudah dipublish tidak dapat diubah.');

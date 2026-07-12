@@ -10,15 +10,13 @@ use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
-    public function __construct(private EwsSnapshotService $snapshotService)
-    {
-    }
+    public function __construct(private EwsSnapshotService $snapshotService) {}
 
     public function index()
     {
         $guru = Auth::user()->guru;
 
-        if (!$guru) {
+        if (! $guru) {
             return view('wali_kelas.dashboard', [
                 'kelas' => null,
                 'semester' => null,
@@ -63,6 +61,7 @@ class DashboardController extends Controller
 
             $siswaTerurut = $siswaTerurut->map(function ($item) use ($trendsBatch) {
                 $item->trend_harian = $trendsBatch->get($item->siswa_id, ['arah' => 'tetap', 'selisih' => 0.0, 'skor_sebelumnya' => null]);
+
                 return $item;
             });
 

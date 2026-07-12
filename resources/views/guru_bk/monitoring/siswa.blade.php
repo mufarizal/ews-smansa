@@ -94,7 +94,6 @@
                                         $isSelected = $aiFilterId == $record->id;
                                     @endphp
                                     <option value="{{ $record->id }}" @if($isSelected) selected @endif>
-                                        {{ $record->provider_used ?? 'unknown' }} —
                                         {{ \Carbon\Carbon::parse($record->generated_at)->translatedFormat('d M Y H:i') }}
                                     </option>
                                 @endforeach
@@ -107,11 +106,6 @@
                     <div class="mt-3 flex flex-wrap items-center gap-2 text-xs text-gray-500">
                         <span>Terakhir diperbarui
                             {{ \Carbon\Carbon::parse($rekomendasiAi['generated_at'])->diffForHumans() }}</span>
-                        @if (!empty($rekomendasiAi['provider_used']))
-                            <span class="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-600">
-                                {{ $rekomendasiAi['provider_used'] }}
-                            </span>
-                        @endif
                     </div>
                 @endif
 

@@ -3,14 +3,11 @@
 namespace App\Http\Controllers\GuruMapel;
 
 use App\Http\Controllers\Controller;
-use App\Models\Guru;
 use App\Models\GuruMapelKelas;
 use App\Models\HasilUjian;
 use App\Models\Jadwal;
 use App\Models\NilaiTugas;
-use App\Models\Perilaku;
 use App\Models\PerilakuSiswa;
-use App\Models\UjianHarian;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller

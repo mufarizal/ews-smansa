@@ -36,6 +36,7 @@ class Absensi extends Model
     ];
 
     const TIPE_HARIAN = 'harian';
+
     const TIPE_MAPEL = 'mapel';
 
     // =========================================================================
@@ -94,7 +95,7 @@ class Absensi extends Model
     {
         $semester = Semester::where('is_active', true)->first();
 
-        if (!$semester) {
+        if (! $semester) {
             return $query->whereRaw('0 = 1');
         }
 
@@ -113,7 +114,7 @@ class Absensi extends Model
             ->where('tipe', self::TIPE_MAPEL);
 
         if ($semesterId) {
-            $query->whereHas('jadwal', fn($q) => $q->where('semester_id', $semesterId));
+            $query->whereHas('jadwal', fn ($q) => $q->where('semester_id', $semesterId));
         }
 
         $total = (clone $query)->count();

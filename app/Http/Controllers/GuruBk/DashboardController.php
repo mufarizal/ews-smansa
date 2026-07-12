@@ -11,14 +11,12 @@ use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
-    public function __construct(private EwsSnapshotService $snapshotService)
-    {
-    }
+    public function __construct(private EwsSnapshotService $snapshotService) {}
 
     private function getGuruId(): int
     {
         $guru = Auth::user()->guru;
-        abort_if(!$guru, 403, 'Data guru tidak ditemukan.');
+        abort_if(! $guru, 403, 'Data guru tidak ditemukan.');
 
         return $guru->id;
     }
@@ -58,7 +56,7 @@ class DashboardController extends Controller
                         'kelas' => $gbk->kelas,
                         'siswa_terburuk' => collect(),
                         'trend_mingguan' => null,
-                    ]
+                    ],
                 ];
             }
 
@@ -73,6 +71,7 @@ class DashboardController extends Controller
 
             $siswaTerburuk = $siswaTerburuk->map(function ($item) use ($trends) {
                 $item->trend_harian = $trends->get($item->siswa_id, ['arah' => 'tetap', 'selisih' => 0.0, 'skor_sebelumnya' => null]);
+
                 return $item;
             });
 
@@ -81,7 +80,7 @@ class DashboardController extends Controller
                     'kelas' => $gbk->kelas,
                     'siswa_terburuk' => $siswaTerburuk,
                     'trend_mingguan' => $this->snapshotService->trendMingguan($gbk->kelas_id, $semester->id),
-                ]
+                ],
             ];
         });
 
@@ -93,11 +92,12 @@ class DashboardController extends Controller
             ->keyBy('kelas_id');
 
         $kelasBelumGenerate = $guruBkKelas->filter(
-            fn($gbk) => !isset($hasilPerKelas[$gbk->kelas_id])
+            fn ($gbk) => ! isset($hasilPerKelas[$gbk->kelas_id])
         );
 
         $kelasStale = $guruBkKelas->filter(function ($gbk) use ($hasilPerKelas) {
             $info = $hasilPerKelas[$gbk->kelas_id] ?? null;
+
             return $info && now()->diffInDays($info->last_generated_at) > 30;
         });
 

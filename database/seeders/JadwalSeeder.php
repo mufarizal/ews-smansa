@@ -390,7 +390,7 @@ class JadwalSeeder extends Seeder
 
         // Urutkan blok terbesar dulu supaya blok 2 JP tidak ketinggalan
         // di slot yang cuma sisa 1
-        usort($blok, fn($a, $b) => $b[1] <=> $a[1]);
+        usort($blok, fn ($a, $b) => $b[1] <=> $a[1]);
 
         $ptr = 0;
         foreach ($blok as [$mapelId, $jp]) {
@@ -402,7 +402,7 @@ class JadwalSeeder extends Seeder
                 $hari = $hariUrutan[($ptr + $offset) % count($hariUrutan)];
                 $sudahAdaMapelIni = collect($isiHari[$hari])->pluck(0)->contains($mapelId);
 
-                if (!$sudahAdaMapelIni && $sisaKapasitas[$hari] >= $jp) {
+                if (! $sudahAdaMapelIni && $sisaKapasitas[$hari] >= $jp) {
                     $isiHari[$hari][] = [$mapelId, $jp];
                     $sisaKapasitas[$hari] -= $jp;
                     $ptr = ($ptr + $offset + 1) % count($hariUrutan);
@@ -413,7 +413,7 @@ class JadwalSeeder extends Seeder
 
             // fallback: kalau semua hari sudah punya mapel ini, tempel di hari
             // manapun yang masih cukup kapasitas (boleh dobel di hari yang sama)
-            if (!$ditempatkan) {
+            if (! $ditempatkan) {
                 foreach ($hariUrutan as $hari) {
                     if ($sisaKapasitas[$hari] >= $jp) {
                         $isiHari[$hari][] = [$mapelId, $jp];
@@ -456,7 +456,7 @@ class JadwalSeeder extends Seeder
 
             $slotIdx = 0;
             foreach ($daftarMapel as [$mapelId, $jp]) {
-                if (!isset($penugasanKelas[$mapelId])) {
+                if (! isset($penugasanKelas[$mapelId])) {
                     continue; // jaga-jaga kalau tidak ada guru ditugaskan
                 }
                 if ($slotIdx + $jp > count($slot)) {
@@ -549,7 +549,7 @@ class JadwalSeeder extends Seeder
             DB::table('jadwals')->insert($chunk);
         }
 
-        $this->command->info('✅ Jadwal pelajaran berhasil di-generate: ' . count($jadwals) . ' baris');
+        $this->command->info('✅ Jadwal pelajaran berhasil di-generate: '.count($jadwals).' baris');
 
         // ── Jadwal kegiatan Jumat (rotasi 4 minggu) ─────────────────────
         $kegiatanList = [
@@ -577,7 +577,7 @@ class JadwalSeeder extends Seeder
 
         DB::table('jadwal_kegiatans')->insert($kegiatans);
 
-        $this->command->info('✅ Jadwal kegiatan Jumat berhasil di-generate: ' . count($kegiatans) . ' baris');
+        $this->command->info('✅ Jadwal kegiatan Jumat berhasil di-generate: '.count($kegiatans).' baris');
         $this->command->info('');
         $this->command->info('📋 Ringkasan jadwal per kelas:');
 
@@ -586,7 +586,7 @@ class JadwalSeeder extends Seeder
         foreach ($byKelas as $kId => $rows) {
             $mapelCount = collect($rows)->pluck('mapel_id')->unique()->count();
             $byHari = collect($rows)->groupBy('hari')->map->count();
-            $detail = $byHari->map(fn($c, $h) => "$h:$c")->implode(', ');
+            $detail = $byHari->map(fn ($c, $h) => "$h:$c")->implode(', ');
             $this->command->line("   Kelas {$kelasNama[$kId]}: {$rows->count()} slot, {$mapelCount} mapel — [$detail]");
         }
     }

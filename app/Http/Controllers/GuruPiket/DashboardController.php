@@ -28,7 +28,7 @@ class DashboardController extends Controller
         if ($currentGuru) {
             $piketDaysRaw = $currentGuru->getPiketDaysActiveSemester();
         }
-        $piketDays = array_map(fn($h) => Guru::convertHariToIndonesia($h), $piketDaysRaw);
+        $piketDays = array_map(fn ($h) => Guru::convertHariToIndonesia($h), $piketDaysRaw);
 
         // C. Statistik Ringkas
         $sessionsToday = 0;

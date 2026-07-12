@@ -51,7 +51,7 @@ class WaliKelasSiswaExport implements FromCollection, ShouldAutoSize, WithHeadin
             : collect();
 
         $rekomendasiByKategori = [];
-        foreach (['binaan', 'perhatian', 'aman'] as $kategori) {
+        foreach (EarlyWarningResult::KATEGORI as $kategori) {
             $rekomendasiByKategori[$kategori] = AiRecommendation::where('scope', 'kelas')
                 ->where('scope_id', $this->kelasId)
                 ->where('kategori', $kategori)

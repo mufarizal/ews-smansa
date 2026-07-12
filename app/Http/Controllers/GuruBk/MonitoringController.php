@@ -5,6 +5,7 @@ namespace App\Http\Controllers\GuruBk;
 use App\Exports\MonitoringSiswaExport;
 use App\Http\Controllers\Controller;
 use App\Models\AiRecommendation;
+use App\Models\EarlyWarningResult;
 use App\Models\GuruBkKelas;
 use App\Models\Kelas;
 use App\Models\Semester;
@@ -114,7 +115,7 @@ class MonitoringController extends Controller
 
                 return $item;
             })
-            ->when($kategoriFilter && in_array($kategoriFilter, ['binaan', 'perhatian', 'aman'], true), function ($collection) use ($kategoriFilter) {
+            ->when($kategoriFilter && in_array($kategoriFilter, EarlyWarningResult::KATEGORI, true), function ($collection) use ($kategoriFilter) {
                 return $collection->filter(fn ($item) => ($item->kategori ?? null) === $kategoriFilter)->values();
             })
             ->sortBy(function ($item) {
@@ -122,7 +123,7 @@ class MonitoringController extends Controller
                     return sprintf('99-%s', strtolower($item->siswa->nama ?? ''));
                 }
 
-                $rankMap = ['binaan' => 0, 'perhatian' => 1, 'aman' => 2];
+                $rankMap = EarlyWarningResult::URUTAN_KATEGORI;
                 $rank = $rankMap[$item->kategori] ?? 99;
 
                 return sprintf('%02d-%015.4f-%s', $rank, (float) ($item->skor_akhir ?? 0), strtolower($item->siswa->nama ?? ''));

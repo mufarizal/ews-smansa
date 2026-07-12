@@ -209,8 +209,9 @@ SYSTEM;
     {
         $semester = Semester::where('is_active', true)->first();
 
-        if (!$semester) {
+        if (! $semester) {
             Log::warning('[AI] Tidak ada semester aktif, skip generate AI.');
+
             return;
         }
 
@@ -241,7 +242,7 @@ SYSTEM;
             ->where('semester_id', $semester->id)
             ->max('tanggal_hitung');
 
-        if (!$tanggalTerbaru) {
+        if (! $tanggalTerbaru) {
             throw new \RuntimeException(
                 "Belum ada hasil SAW untuk kelas {$kelas->nama_kelas}. Tunggu scheduler SAW jalan."
             );
@@ -258,21 +259,22 @@ SYSTEM;
         $output = [];
         $kategoriSudahDiproses = false;
 
-        foreach (['binaan', 'perhatian', 'aman'] as $kategori) {
+        foreach (EarlyWarningResult::KATEGORI as $kategori) {
             $siswas = $hasil->where('kategori', $kategori);
 
             if ($siswas->isEmpty()) {
                 $output[$kategori] = null;
+
                 continue;
             }
 
             if ($kategoriSudahDiproses) {
-                Log::info("[AI] Jeda " . self::JEDA_ANTAR_KATEGORI_DETIK . " detik sebelum kategori berikutnya...");
+                Log::info('[AI] Jeda '.self::JEDA_ANTAR_KATEGORI_DETIK.' detik sebelum kategori berikutnya...');
                 sleep(self::JEDA_ANTAR_KATEGORI_DETIK);
             }
 
             $output[$kategori] = $this->callDenganFallback(
-                konteks: "Kelas: {$kelas->nama_kelas} | Semester: {$semester->nama} | Kategori: " . strtoupper($kategori),
+                konteks: "Kelas: {$kelas->nama_kelas} | Semester: {$semester->nama} | Kategori: ".strtoupper($kategori),
                 siswas: $siswas,
                 scope: 'kelas',
                 scopeId: $kelasId,
@@ -301,14 +303,14 @@ SYSTEM;
             ->orderByDesc('tanggal_hitung')
             ->first();
 
-        if (!$row) {
+        if (! $row) {
             throw new \RuntimeException(
                 "Data SAW siswa {$siswa->nama} belum ada. Tunggu scheduler SAW jalan."
             );
         }
 
         return $this->callDenganFallback(
-            konteks: "Siswa Individual | Semester: {$semester->nama} | Kategori: " . strtoupper($row->kategori),
+            konteks: "Siswa Individual | Semester: {$semester->nama} | Kategori: ".strtoupper($row->kategori),
             siswas: collect([$row]),
             scope: 'siswa',
             scopeId: $siswaId,
@@ -343,6 +345,7 @@ SYSTEM;
                 empty($provider['key'])
             ) {
                 Log::warning("[AI] Key kosong untuk {$provider['name']}, skip.");
+
                 continue;
             }
 
@@ -405,10 +408,11 @@ SYSTEM;
         }
 
         throw new \RuntimeException(
-            'Semua provider AI gagal. Error terakhir: ' .
+            'Semua provider AI gagal. Error terakhir: '.
             ($lastException?->getMessage() ?? 'Unknown error')
         );
     }
+
     private function callGemini(string $key, string $model, string $prompt): string
     {
         $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent";
@@ -428,11 +432,11 @@ SYSTEM;
             ]);
 
         if ($response->status() === 429 || $response->serverError()) {
-            throw new \RuntimeException("HTTP {$response->status()}: " . $response->body());
+            throw new \RuntimeException("HTTP {$response->status()}: ".$response->body());
         }
 
         if ($response->failed()) {
-            throw new \RuntimeException("HTTP {$response->status()}: " . $response->body());
+            throw new \RuntimeException("HTTP {$response->status()}: ".$response->body());
         }
 
         $text = $response->json('candidates.0.content.parts.0.text');
@@ -451,7 +455,7 @@ SYSTEM;
     ): string {
         $response = Http::timeout(60)
             ->acceptJson()
-            ->post(rtrim($url, '/') . '/api/generate', [
+            ->post(rtrim($url, '/').'/api/generate', [
                 'model' => $model,
                 'prompt' => $prompt,
                 'stream' => false,
@@ -474,7 +478,7 @@ SYSTEM;
 
     private function buildPrompt(string $konteks, Collection $siswas, string $systemPrompt = self::SYSTEM_PROMPT): string
     {
-        $dataSiswa = $siswas->map(fn($row) => [
+        $dataSiswa = $siswas->map(fn ($row) => [
             'nis' => $row->siswa->nis ?? '-',
             'nama' => $row->siswa->nama ?? '-',
             'kategori' => $row->kategori,
@@ -495,9 +499,9 @@ SYSTEM;
         ])->values()->toJson(JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 
         return $systemPrompt
-            . "\n\n---\n"
-            . "Konteks: {$konteks}\n\n"
-            . "Data Siswa:\n{$dataSiswa}";
+            ."\n\n---\n"
+            ."Konteks: {$konteks}\n\n"
+            ."Data Siswa:\n{$dataSiswa}";
     }
 
     private function parseResponse(string $raw): array
@@ -509,12 +513,12 @@ SYSTEM;
 
         $decoded = json_decode($clean, true);
 
-        if (json_last_error() !== JSON_ERROR_NONE || !is_array($decoded)) {
+        if (json_last_error() !== JSON_ERROR_NONE || ! is_array($decoded)) {
             Log::error('[AI] Gagal parse JSON response', [
                 'raw' => substr($raw, 0, 500),
                 'error' => json_last_error_msg(),
             ]);
-            throw new \RuntimeException('Response AI tidak valid: ' . json_last_error_msg());
+            throw new \RuntimeException('Response AI tidak valid: '.json_last_error_msg());
         }
 
         return $decoded;

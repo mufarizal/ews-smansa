@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 
 class AiRecommendation extends Model
 {
@@ -78,11 +79,11 @@ class AiRecommendation extends Model
      * Ambil rekomendasi AI terbaru untuk satu kelas di semester aktif.
      * Return collection di-keyBy kategori.
      */
-    public static function untukKelasSekarang(int $kelasId): \Illuminate\Support\Collection
+    public static function untukKelasSekarang(int $kelasId): Collection
     {
         $semester = Semester::where('is_active', true)->first();
 
-        if (!$semester) {
+        if (! $semester) {
             return collect();
         }
 
@@ -100,7 +101,7 @@ class AiRecommendation extends Model
     {
         $semester = Semester::where('is_active', true)->first();
 
-        if (!$semester) {
+        if (! $semester) {
             return null;
         }
 

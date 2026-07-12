@@ -6,9 +6,9 @@
     ];
     $style = $map[$kategori] ?? ['bg' => 'bg-gray-100', 'text' => 'text-gray-500', 'border' => 'border-gray-200'];
     $label = match ($kategori) {
-        'binaan' => 'Perlu Bimbingan',
-        'perhatian' => 'Perlu Perhatian',
-        'aman' => 'Baik',
+        'binaan' => 'Binaan',
+        'perhatian' => 'Perhatian',
+        'aman' => 'Aman',
         default => 'Belum ada data',
     };
 @endphp

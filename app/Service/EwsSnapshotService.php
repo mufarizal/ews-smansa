@@ -19,7 +19,7 @@ class EwsSnapshotService
             ->where('semester_id', $semesterId)
             ->max('tanggal_hitung');
 
-        if (!$tanggalTerbaru) {
+        if (! $tanggalTerbaru) {
             return collect();
         }
 
@@ -93,7 +93,7 @@ class EwsSnapshotService
             ->where('tanggal_hitung', $tanggalTerbaru)
             ->first();
 
-        if (!$current) {
+        if (! $current) {
             return ['arah' => 'baru', 'selisih' => 0.0, 'skor_sebelumnya' => null];
         }
 
@@ -103,7 +103,7 @@ class EwsSnapshotService
             ->orderByDesc('tanggal_hitung')
             ->first();
 
-        if (!$sebelumnya) {
+        if (! $sebelumnya) {
             return ['arah' => 'baru', 'selisih' => 0.0, 'skor_sebelumnya' => null];
         }
 
@@ -153,7 +153,7 @@ class EwsSnapshotService
         return $currentRecords->map(function ($current) use ($previousRecords) {
             $sebelumnya = $previousRecords->get($current->siswa_id);
 
-            if (!$sebelumnya) {
+            if (! $sebelumnya) {
                 return ['arah' => 'baru', 'selisih' => 0.0, 'skor_sebelumnya' => null];
             }
 
@@ -187,14 +187,14 @@ class EwsSnapshotService
         $awalMinggu = Carbon::now()->startOfWeek(Carbon::MONDAY)->toDateString();
         $akhirMinggu = Carbon::now()->endOfWeek(Carbon::FRIDAY)->toDateString();
 
-        $baseQuery = fn() => EarlyWarningResult::where('kelas_id', $kelasId)
+        $baseQuery = fn () => EarlyWarningResult::where('kelas_id', $kelasId)
             ->where('semester_id', $semesterId)
             ->whereBetween('tanggal_hitung', [$awalMinggu, $akhirMinggu]);
 
         $tanggalAwalTersedia = $baseQuery()->min('tanggal_hitung');
         $tanggalTerbaruTersedia = $baseQuery()->max('tanggal_hitung');
 
-        if (!$tanggalAwalTersedia || !$tanggalTerbaruTersedia) {
+        if (! $tanggalAwalTersedia || ! $tanggalTerbaruTersedia) {
             return ['arah' => 'baru', 'selisih' => 0.0, 'rata_rata_awal' => null, 'rata_rata_terbaru' => null];
         }
 
@@ -236,7 +236,7 @@ class EwsSnapshotService
 
     public function urutkanPrioritas(Collection $hasil): Collection
     {
-        $urutanKategori = ['binaan' => 0, 'perhatian' => 1, 'aman' => 2];
+        $urutanKategori = EarlyWarningResult::URUTAN_KATEGORI;
 
         return $hasil->sortBy(function ($item) use ($urutanKategori) {
             $rank = $urutanKategori[$item->kategori] ?? 99;
@@ -250,7 +250,7 @@ class EwsSnapshotService
     {
         $siswa = $hasil->siswa;
 
-        if (!$siswa || empty($siswa->nis)) {
+        if (! $siswa || empty($siswa->nis)) {
             return null;
         }
 
@@ -261,7 +261,7 @@ class EwsSnapshotService
             ->latest('generated_at')
             ->first();
 
-        if (!$rekomendasiKelas) {
+        if (! $rekomendasiKelas) {
             return null;
         }
 
@@ -269,7 +269,7 @@ class EwsSnapshotService
             ? $rekomendasiKelas->rekomendasi
             : json_decode((string) $rekomendasiKelas->rekomendasi, true);
 
-        if (!is_array($daftar)) {
+        if (! is_array($daftar)) {
             return null;
         }
 

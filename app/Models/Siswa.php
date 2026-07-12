@@ -87,7 +87,7 @@ class Siswa extends Model
      * Persentase kehadiran siswa — dihitung dari absensi MAPEL saja.
      * Absensi harian (QR) tidak lagi masuk indikator SAW.
      *
-     * @param int|null $semesterId Filter per semester, null = semua
+     * @param  int|null  $semesterId  Filter per semester, null = semua
      */
     public function getKehadiranPersenAttribute(): float
     {
@@ -102,7 +102,7 @@ class Siswa extends Model
         $query = $this->absensis()->where('tipe', Absensi::TIPE_MAPEL);
 
         if ($semesterId) {
-            $query->whereHas('jadwal', fn($q) => $q->where('semester_id', $semesterId));
+            $query->whereHas('jadwal', fn ($q) => $q->where('semester_id', $semesterId));
         }
 
         $total = (clone $query)->count();
@@ -136,7 +136,7 @@ class Siswa extends Model
         return (int) $this->perilakuSiswas()
             ->with('perilaku')
             ->get()
-            ->sum(fn($p) => $p->perilaku->poin ?? 0);
+            ->sum(fn ($p) => $p->perilaku->poin ?? 0);
     }
 
     /**
@@ -146,7 +146,7 @@ class Siswa extends Model
     {
         $semester = Semester::where('is_active', true)->first();
 
-        if (!$semester) {
+        if (! $semester) {
             return null;
         }
 

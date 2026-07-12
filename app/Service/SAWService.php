@@ -66,7 +66,7 @@ class SAWService
         }
 
         $nilaiMentah = $siswas->map(
-            fn($siswa) => $this->hitungNilaiMentah($siswa, $semester)
+            fn ($siswa) => $this->hitungNilaiMentah($siswa, $semester)
         );
 
         $hasil = $this->prosesSaw($nilaiMentah);
@@ -91,9 +91,9 @@ class SAWService
         $absensi = $this->hitungAbsensi($siswa->id, $semester);
         $perilaku = $this->hitungPerilaku($siswa->id, $semester);
 
-        $dataTidakLengkap = !$akademik['ada_data']
-            || !$absensi['ada_data']
-            || !$perilaku['ada_data'];
+        $dataTidakLengkap = ! $akademik['ada_data']
+            || ! $absensi['ada_data']
+            || ! $perilaku['ada_data'];
 
         return [
             'siswa_id' => $siswa->id,
@@ -119,7 +119,7 @@ class SAWService
     {
         $rataRataTugas = NilaiTugas::where('siswa_id', $siswaId)
             ->whereNotNull('nilai')
-            ->whereHas('tugas', fn($q) => $q->whereBetween('tanggal_tugas', [
+            ->whereHas('tugas', fn ($q) => $q->whereBetween('tanggal_tugas', [
                 $semester->tanggal_mulai,
                 $semester->tanggal_selesai,
             ]))
@@ -127,15 +127,15 @@ class SAWService
 
         $rataRataUjian = HasilUjian::where('siswa_id', $siswaId)
             ->whereNotNull('nilai')
-            ->whereHas('ujianHarian', fn($q) => $q->whereBetween('tanggal_ujian', [
+            ->whereHas('ujianHarian', fn ($q) => $q->whereBetween('tanggal_ujian', [
                 $semester->tanggal_mulai,
                 $semester->tanggal_selesai,
             ]))
             ->avg('nilai');
 
-        $adaData = !is_null($rataRataTugas) || !is_null($rataRataUjian);
+        $adaData = ! is_null($rataRataTugas) || ! is_null($rataRataUjian);
 
-        if (!$adaData) {
+        if (! $adaData) {
             return ['nilai' => 0.0, 'ada_data' => false];
         }
 
@@ -204,7 +204,7 @@ class SAWService
                 $semester->tanggal_mulai,
                 $semester->tanggal_selesai,
             ])
-            ->whereHas('perilaku', fn($q) => $q->where('status_aktif', true))
+            ->whereHas('perilaku', fn ($q) => $q->where('status_aktif', true))
             ->with('perilaku:id,jenis,poin')
             ->get();
 
@@ -218,12 +218,12 @@ class SAWService
         }
 
         $totalNegatif = $records
-            ->filter(fn($r) => $r->perilaku->jenis === 'negatif')
-            ->sum(fn($r) => abs($r->perilaku->poin));
+            ->filter(fn ($r) => $r->perilaku->jenis === 'negatif')
+            ->sum(fn ($r) => abs($r->perilaku->poin));
 
         $totalPositif = $records
-            ->filter(fn($r) => $r->perilaku->jenis === 'positif')
-            ->sum(fn($r) => $r->perilaku->poin);
+            ->filter(fn ($r) => $r->perilaku->jenis === 'positif')
+            ->sum(fn ($r) => $r->perilaku->poin);
 
         return [
             'skor' => round(max(0.0, 100.0 - $totalNegatif), 2),
@@ -250,7 +250,7 @@ class SAWService
         // Kriteria cost: absensi/total tidak hadir (semakin kecil semakin baik).
         // +1 diterapkan pada seluruh nilai untuk menghindari pembagian oleh nol
         // pada siswa dengan kehadiran sempurna (total tidak hadir = 0).
-        $minC2 = $nilaiMentah->map(fn($r) => $r['c2_absensi'] + 1)->min() ?: 1;
+        $minC2 = $nilaiMentah->map(fn ($r) => $r['c2_absensi'] + 1)->min() ?: 1;
 
         return $nilaiMentah->map(function ($row) use ($maxC1, $minC2, $maxC3, $bobot) {
 
@@ -300,7 +300,7 @@ class SAWService
     ): void {
         $generatedAt = now();
 
-        $rows = $hasil->map(fn($item) => [
+        $rows = $hasil->map(fn ($item) => [
             'siswa_id' => $item['siswa_id'],
             'semester_id' => $semester->id,
             'kelas_id' => $kelasId,
@@ -351,7 +351,7 @@ class SAWService
     {
         $semester = Semester::where('is_active', true)->first();
 
-        if (!$semester) {
+        if (! $semester) {
             throw new \RuntimeException(
                 'Tidak ada semester aktif. Aktifkan semester terlebih dahulu.'
             );

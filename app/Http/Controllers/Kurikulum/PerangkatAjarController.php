@@ -31,7 +31,7 @@ class PerangkatAjarController extends Controller
                 'kelas',
                 'guru',
                 'semester',
-                'babs' => fn($q) => $q->orderBy('urutan'),
+                'babs' => fn ($q) => $q->orderBy('urutan'),
                 'babs.materi',
             ])
             // Kunci utama: hanya ambil yang sudah punya bab
@@ -52,7 +52,7 @@ class PerangkatAjarController extends Controller
         if ($search !== '') {
             $query->whereHas('babs', function ($q) use ($search) {
                 $q->where('nama_bab', 'like', "%{$search}%")
-                    ->orWhereHas('materi', fn($mq) => $mq->where('judul', 'like', "%{$search}%"));
+                    ->orWhereHas('materi', fn ($mq) => $mq->where('judul', 'like', "%{$search}%"));
             });
         }
 
@@ -61,16 +61,16 @@ class PerangkatAjarController extends Controller
         // Group semua baris GuruMapelKelas berdasarkan Mapel + Guru,
         // supaya kelas paralel tidak menghasilkan kartu berulang.
         $mapelCards = $rows
-            ->groupBy(fn($gmk) => $gmk->mapel_id . '-' . $gmk->guru_id)
+            ->groupBy(fn ($gmk) => $gmk->mapel_id.'-'.$gmk->guru_id)
             ->map(function ($group) {
                 $first = $group->first();
 
                 // Bab unik berdasarkan nama_bab (konten biasanya sama di tiap kelas paralel)
-                $allBabs = $group->flatMap(fn($gmk) => $gmk->babs);
+                $allBabs = $group->flatMap(fn ($gmk) => $gmk->babs);
                 $uniqueBabs = $allBabs->unique('nama_bab');
 
                 $uniqueMateriCount = $allBabs
-                    ->flatMap(fn($bab) => $bab->materi)
+                    ->flatMap(fn ($bab) => $bab->materi)
                     ->unique('judul')
                     ->count();
 
@@ -86,7 +86,7 @@ class PerangkatAjarController extends Controller
                     'kelasCount' => $group->pluck('kelas_id')->unique()->count(),
                 ];
             })
-            ->sortBy(fn($card) => $card->mapel->nama ?? '')
+            ->sortBy(fn ($card) => $card->mapel->nama ?? '')
             ->values();
 
         return view('kurikulum.perangkat-ajar.index', [
@@ -120,8 +120,8 @@ class PerangkatAjarController extends Controller
             ->with([
                 'kelas',
                 'semester',
-                'babs' => fn($q) => $q->orderBy('urutan'),
-                'babs.materi' => fn($q) => $q->orderBy('urutan'),
+                'babs' => fn ($q) => $q->orderBy('urutan'),
+                'babs.materi' => fn ($q) => $q->orderBy('urutan'),
             ])
             ->whereHas('babs');
 
@@ -130,7 +130,7 @@ class PerangkatAjarController extends Controller
         }
 
         $kelasGroups = $query->get()
-            ->sortBy(fn($gmk) => $gmk->kelas->nama_kelas ?? '')
+            ->sortBy(fn ($gmk) => $gmk->kelas->nama_kelas ?? '')
             ->values();
 
         return view('kurikulum.perangkat-ajar.show', [

@@ -192,18 +192,9 @@
 
     {{-- Catatan & Saran --}}
     <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-                <h3 class="text-base font-semibold text-slate-900">Catatan & Saran untuk Saya</h3>
-                <p class="mt-1 text-xs text-gray-500">Hasil refleksi kondisimu dan langkah yang bisa kamu lakukan.</p>
-            </div>
-            <form method="POST" action="{{ route('siswa.profil.generate-saran') }}">
-                @csrf
-                <button type="submit"
-                    class="rounded-lg border border-emerald-600 bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition-colors">
-                    Muat ulang saran saya
-                </button>
-            </form>
+        <div>
+            <h3 class="text-base font-semibold text-slate-900">Catatan & Saran untuk Saya</h3>
+            <p class="mt-1 text-xs text-gray-500">Hasil refleksi kondisimu dan langkah yang bisa kamu lakukan.</p>
         </div>
 
         @if ($rekomendasi && !empty($rekomendasi->rekomendasi))
@@ -241,14 +232,14 @@
             </div>
             <p class="mt-3 text-xs text-gray-400">
                 Diperbarui {{ \Carbon\Carbon::parse($rekomendasi->generated_at)->diffForHumans() }}
-                @if ($rekomendasi->provider_used)
-                    • {{ $rekomendasi->provider_used }}
+                @if ($aiRefreshing)
+                    • Analisis terbaru sedang disiapkan.
                 @endif
             </p>
         @else
             <div class="mt-4 rounded-xl border border-dashed border-gray-300 bg-gray-50 p-6 text-center">
                 <p class="text-sm text-gray-600">Belum ada catatan & saran.</p>
-                <p class="mt-1 text-xs text-gray-400">Klik "Muat ulang saran saya" untuk menghasilkan refleksi perkembanganmu.</p>
+                <p class="mt-1 text-xs text-gray-400">Analisis akan muncul setelah data perkembangan dihitung.</p>
             </div>
         @endif
     </div>

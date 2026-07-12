@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Siswa;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\GenerateAiRecommendationJob;
 use App\Models\Absensi;
 use App\Models\AiRecommendation;
 use App\Models\EarlyWarningResult;
@@ -192,6 +193,16 @@ class PembelajaranController extends Controller
 
         $rekomendasi = AiRecommendation::untukSiswaSekarang($siswa->id);
 
+        $aiRefreshing = false;
+
+        if ($rekomendasi && $hasilEws && $hasilEws->generated_at) {
+            $aiRefreshing = $rekomendasi->generated_at->lt($hasilEws->generated_at);
+        }
+
+        if ($aiRefreshing || ! $rekomendasi) {
+            GenerateAiRecommendationJob::withDelay(now()->addSeconds(30))->dispatch($siswa->id);
+        }
+
         $riwayatEws = EarlyWarningResult::where('siswa_id', $siswa->id)
             ->semesterAktif()
             ->orderBy('tanggal_hitung')
@@ -203,10 +214,10 @@ class PembelajaranController extends Controller
         $skorPerilaku = $siswa->total_skor_perilaku;
 
         $perilakuPositif = PerilakuSiswa::where('siswa_id', $siswa->id)
-            ->whereHas('perilaku', fn($q) => $q->where('jenis', 'positif'))
+            ->whereHas('perilaku', fn ($q) => $q->where('jenis', 'positif'))
             ->count();
         $perilakuNegatif = PerilakuSiswa::where('siswa_id', $siswa->id)
-            ->whereHas('perilaku', fn($q) => $q->where('jenis', 'negatif'))
+            ->whereHas('perilaku', fn ($q) => $q->where('jenis', 'negatif'))
             ->count();
 
         $riwayatPerilaku = PerilakuSiswa::with('perilaku')
@@ -234,25 +245,9 @@ class PembelajaranController extends Controller
             'skorPerilaku',
             'perilakuPositif',
             'perilakuNegatif',
-            'riwayatPerilaku'
+            'riwayatPerilaku',
+            'aiRefreshing'
         ));
-    }
-
-    /**
-     * Hasilkan / perbarui rekomendasi perkembangan untuk siswa yang login.
-     * Memanggil AIService::generateUntukSiswa (prompt khusus siswa).
-     */
-    public function generateSaran(Request $request)
-    {
-        $siswa = $this->getSiswa();
-
-        try {
-            app(\App\Service\AIService::class)->generateUntukSiswa($siswa->id);
-
-            return back()->with('success', 'Saran perkembangan berhasil diperbarui.');
-        } catch (\Throwable $e) {
-            return back()->with('error', 'Gagal memuat saran: ' . $e->getMessage());
-        }
     }
 
     // -----------------------------------------------------------------------

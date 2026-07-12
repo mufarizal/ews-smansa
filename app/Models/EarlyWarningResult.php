@@ -6,6 +6,16 @@ use Illuminate\Database\Eloquent\Model;
 
 class EarlyWarningResult extends Model
 {
+    public const KATEGORI = ['aman', 'perhatian', 'binaan'];
+
+    public const KATEGORI_LABEL = [
+        'aman' => 'Aman',
+        'perhatian' => 'Perhatian',
+        'binaan' => 'Binaan',
+    ];
+
+    public const URUTAN_KATEGORI = ['binaan' => 0, 'perhatian' => 1, 'aman' => 2];
+
     protected $fillable = [
         'siswa_id',
         'kelas_id',
@@ -121,12 +131,7 @@ class EarlyWarningResult extends Model
 
     public function getKategoriLabelAttribute(): string
     {
-        return match ($this->kategori) {
-            'aman' => 'Aman',
-            'perhatian' => 'Perhatian',
-            'binaan' => 'Binaan',
-            default => '-',
-        };
+        return $this->KATEGORI_LABEL[$this->kategori] ?? '-';
     }
 
     public function getKategoriBadgeColorAttribute(): string
@@ -144,6 +149,6 @@ class EarlyWarningResult extends Model
      */
     public function getKehadiranPersenAttribute(): string
     {
-        return round($this->c2_absensi, 1) . '%';
+        return round($this->c2_absensi, 1).'%';
     }
 }

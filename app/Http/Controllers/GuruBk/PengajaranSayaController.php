@@ -21,18 +21,18 @@ class PengajaranSayaController extends Controller
         $todayHari = Jadwal::carbonToHari(now());
 
         $user = Auth::user();
-        if (!$user?->guru) {
+        if (! $user?->guru) {
             return view('guru_bk.pengajaran_saya.index', $this->emptyData($selectedSemesterId, $todayHari));
         }
 
         $guru = Guru::with([
             'user',
-            'guruBkKelas' => fn($query) => $query
+            'guruBkKelas' => fn ($query) => $query
                 ->with(['kelas', 'semester'])
-                ->when($selectedSemesterId, fn($q) => $q->where('semester_id', $selectedSemesterId)),
+                ->when($selectedSemesterId, fn ($q) => $q->where('semester_id', $selectedSemesterId)),
         ])->find($user->guru->id);
 
-        if (!$guru) {
+        if (! $guru) {
             return view('guru_bk.pengajaran_saya.index', $this->emptyData($selectedSemesterId, $todayHari));
         }
 
@@ -41,7 +41,7 @@ class PengajaranSayaController extends Controller
         $kelasDiajar = Kelas::with([
             'semester',
             'waliKelas',
-            'siswas' => fn($query) => $query->orderBy('nama'),
+            'siswas' => fn ($query) => $query->orderBy('nama'),
         ])
             ->whereIn('id', $kelasIds)
             ->orderBy('nama_kelas')
@@ -49,7 +49,7 @@ class PengajaranSayaController extends Controller
 
         $jadwals = Jadwal::with(['semester', 'kelas', 'mapel', 'guru'])
             ->where('guru_id', $guru->id)
-            ->when($selectedSemesterId, fn($query) => $query->where('semester_id', $selectedSemesterId))
+            ->when($selectedSemesterId, fn ($query) => $query->where('semester_id', $selectedSemesterId))
             ->orderByRaw("CASE hari
                 WHEN 'Senin'  THEN 1 WHEN 'Selasa' THEN 2 WHEN 'Rabu'   THEN 3
                 WHEN 'Kamis'  THEN 4 WHEN 'Jumat'  THEN 5 WHEN 'Sabtu'  THEN 6
@@ -61,7 +61,7 @@ class PengajaranSayaController extends Controller
         $jadwalHariIni = Jadwal::with(['semester', 'kelas', 'mapel'])
             ->where('guru_id', $guru->id)
             ->where('hari', $todayHari)
-            ->when($selectedSemesterId, fn($query) => $query->where('semester_id', $selectedSemesterId))
+            ->when($selectedSemesterId, fn ($query) => $query->where('semester_id', $selectedSemesterId))
             ->orderBy('jam_mulai')
             ->get();
 

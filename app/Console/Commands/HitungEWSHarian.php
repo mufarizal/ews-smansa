@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Kelas;
 use App\Models\Semester;
+use App\Service\AIService;
 use App\Service\SAWService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -24,7 +25,7 @@ class HitungEWSHarian extends Command
 
     public function __construct(
         private SAWService $sawService,
-        private \App\Service\AIService $aiService,
+        private AIService $aiService,
     ) {
         parent::__construct();
     }
@@ -33,8 +34,9 @@ class HitungEWSHarian extends Command
     {
         $semester = Semester::where('is_active', true)->first();
 
-        if (!$semester) {
+        if (! $semester) {
             $this->error('Tidak ada semester aktif. Batalkan.');
+
             return self::FAILURE;
         }
 
@@ -66,12 +68,13 @@ class HitungEWSHarian extends Command
 
         if ($kelasList->isEmpty()) {
             $this->warn('Tidak ada kelas dengan siswa. Selesai.');
+
             return self::SUCCESS;
         }
 
         $this->info("Total kelas: {$kelasList->count()}");
 
-        if (!$aiOnly) {
+        if (! $aiOnly) {
             $this->info("\n[SAW] Mulai perhitungan...");
             $this->newLine();
 
@@ -98,14 +101,14 @@ class HitungEWSHarian extends Command
             $this->info('[SAW] Selesai.');
         }
 
-        if (!$sawOnly) {
+        if (! $sawOnly) {
             $this->info("\n[AI] Mulai generate rekomendasi...");
             $this->info('[AI] Jeda 10 detik antar kelas untuk menghindari rate limit.');
             $this->newLine();
 
             foreach ($kelasList as $index => $kelas) {
                 if ($index > 0) {
-                    $this->info("[AI] Menunggu 10 detik sebelum kelas berikutnya...");
+                    $this->info('[AI] Menunggu 10 detik sebelum kelas berikutnya...');
                     sleep(10);
                 }
 
@@ -152,6 +155,7 @@ class HitungEWSHarian extends Command
         $kelasList = Kelas::whereHas('siswas')->get();
         if ($kelasList->isEmpty()) {
             $this->warn('Tidak ada kelas dengan siswa.');
+
             return self::SUCCESS;
         }
 
@@ -186,7 +190,7 @@ class HitungEWSHarian extends Command
         }
 
         $this->newLine(2);
-        $this->info("=== Hasil Backfill ===");
+        $this->info('=== Hasil Backfill ===');
         $this->info("Total batch: {$totalBatch}");
         $this->info("Sukses: {$totalSukses}");
         $this->info("Gagal: {$totalGagal}");
@@ -209,6 +213,7 @@ class HitungEWSHarian extends Command
         $kelasList = Kelas::whereHas('siswas')->get();
         if ($kelasList->isEmpty()) {
             $this->warn('Tidak ada kelas dengan siswa.');
+
             return self::SUCCESS;
         }
 
@@ -243,7 +248,7 @@ class HitungEWSHarian extends Command
         }
 
         $this->newLine(2);
-        $this->info("=== Hasil Backfill ===");
+        $this->info('=== Hasil Backfill ===');
         $this->info("Total batch: {$totalBatch}");
         $this->info("Sukses: {$totalSukses}");
         $this->info("Gagal: {$totalGagal}");

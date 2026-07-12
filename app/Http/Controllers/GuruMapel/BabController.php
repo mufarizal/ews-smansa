@@ -66,7 +66,7 @@ class BabController extends Controller
 
         $assignment = GuruMapelKelas::with(['mapel', 'kelas'])->findOrFail($validated['guru_mapel_kelas_id']);
         $guru = Auth::user()->guru;
-        abort_if(!$guru || $assignment->guru_id !== $guru->id, 403);
+        abort_if(! $guru || $assignment->guru_id !== $guru->id, 403);
 
         Bab::create($validated);
 
@@ -77,7 +77,7 @@ class BabController extends Controller
     public function show(Bab $bab): View
     {
         $guru = Auth::user()->guru;
-        abort_if(!$guru || $bab->guruMapelKelas->guru_id !== $guru->id, 403);
+        abort_if(! $guru || $bab->guruMapelKelas->guru_id !== $guru->id, 403);
 
         $bab->load([
             'guruMapelKelas.mapel',
@@ -91,7 +91,7 @@ class BabController extends Controller
     public function edit(Bab $bab): View
     {
         $guru = Auth::user()->guru;
-        abort_if(!$guru || $bab->guruMapelKelas->guru_id !== $guru->id, 403);
+        abort_if(! $guru || $bab->guruMapelKelas->guru_id !== $guru->id, 403);
 
         $bab->load(['guruMapelKelas.mapel', 'guruMapelKelas.kelas']);
 
@@ -101,7 +101,7 @@ class BabController extends Controller
     public function update(Request $request, Bab $bab): RedirectResponse
     {
         $guru = Auth::user()->guru;
-        abort_if(!$guru || $bab->guruMapelKelas->guru_id !== $guru->id, 403);
+        abort_if(! $guru || $bab->guruMapelKelas->guru_id !== $guru->id, 403);
 
         $validated = $request->validate([
             'nama_bab' => 'required|string|max:255',
@@ -120,7 +120,7 @@ class BabController extends Controller
     public function destroy(Bab $bab): RedirectResponse
     {
         $guru = Auth::user()->guru;
-        abort_if(!$guru || $bab->guruMapelKelas->guru_id !== $guru->id, 403);
+        abort_if(! $guru || $bab->guruMapelKelas->guru_id !== $guru->id, 403);
 
         $bab->delete();
 
