@@ -5,6 +5,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
+    <meta name="theme-color" content="#22c55e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="EWS">
     <title>{{ config('app.name', 'EWS SMANSA') }} — @yield('title', 'Dashboard')</title>
     {{-- Tabler Icons Webfont — satu baris, langsung jalan, pakai class "ti ti-nama-icon" --}}
     <link rel="icon" href=" {{ asset('img/logo.png') }}" type="image/png">

@@ -1,0 +1,23 @@
+{
+    "name": "Early Warning System SMA Negeri 1",
+    "short_name": "EWS",
+    "description": "Sistem Early Warning System untuk pemantauan siswa.",
+    "start_url": "/",
+    "scope": "/",
+    "display": "standalone",
+    "orientation": "portrait",
+    "background_color": "#ffffff",
+    "theme_color": "#22c55e",
+    "icons": [
+        {
+            "src": "/icons/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/icons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
