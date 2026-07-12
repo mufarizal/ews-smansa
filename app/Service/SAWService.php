@@ -178,15 +178,14 @@ class SAWService
             return ['nilai' => 0.0, 'ada_data' => false];
         }
 
-        $total = $records->count();
-        $hadir = $records->whereIn('status', ['hadir', 'terlambat'])->count();
-        // Catatan: terlambat tetap dihitung hadir untuk % kehadiran,
-        // karena pelanggaran terlambat sudah masuk ke indikator Perilaku.
-
-        $persen = round(($hadir / $total) * 100, 2);
+        // Kriteria cost: total ketidakhadiran (izin + sakit + alpa).
+        // Semakin kecil nilainya, semakin baik. Status 'terlambat' tetap
+        // dihitung hadir karena pelanggaran ini sudah tercakup pada
+        // kriteria Perilaku, bukan Absensi.
+        $tidakHadir = $records->whereNotIn('status', ['hadir', 'terlambat'])->count();
 
         return [
-            'nilai' => $persen, // 0 - 100
+            'nilai' => (float) $tidakHadir,
             'ada_data' => true,
         ];
     }
@@ -244,16 +243,19 @@ class SAWService
     {
         $bobot = config('ews.bobot');
 
-        // Max tiap kriteria untuk normalisasi
-        // Jika semua 0 pakai 1 agar tidak divide by zero
+        // Kriteria benefit: akademik, perilaku (semakin besar semakin baik)
         $maxC1 = $nilaiMentah->max('c1_akademik') ?: 1;
-        $maxC2 = $nilaiMentah->max('c2_absensi') ?: 1;
         $maxC3 = $nilaiMentah->max('c3_perilaku') ?: 1;
 
-        return $nilaiMentah->map(function ($row) use ($maxC1, $maxC2, $maxC3, $bobot) {
+        // Kriteria cost: absensi/total tidak hadir (semakin kecil semakin baik).
+        // +1 diterapkan pada seluruh nilai untuk menghindari pembagian oleh nol
+        // pada siswa dengan kehadiran sempurna (total tidak hadir = 0).
+        $minC2 = $nilaiMentah->map(fn($r) => $r['c2_absensi'] + 1)->min() ?: 1;
+
+        return $nilaiMentah->map(function ($row) use ($maxC1, $minC2, $maxC3, $bobot) {
 
             $r1 = round($row['c1_akademik'] / $maxC1, 4);
-            $r2 = round($row['c2_absensi'] / $maxC2, 4);
+            $r2 = round($minC2 / ($row['c2_absensi'] + 1), 4);
             $r3 = round($row['c3_perilaku'] / $maxC3, 4);
 
             $vi = round(
@@ -268,20 +270,14 @@ class SAWService
                 'nama' => $row['nama'],
                 'nis' => $row['nis'],
                 'kelas_id' => $row['kelas_id'],
-
-                // Nilai mentah
                 'c1_akademik' => $row['c1_akademik'],
                 'c2_absensi' => $row['c2_absensi'],
                 'c3_perilaku' => $row['c3_perilaku'],
                 'total_perilaku_negatif' => $row['total_perilaku_negatif'],
                 'total_perilaku_positif' => $row['total_perilaku_positif'],
-
-                // Matriks normalisasi
                 'r1_akademik' => $r1,
                 'r2_absensi' => $r2,
                 'r3_perilaku' => $r3,
-
-                // Hasil SAW
                 'skor_akhir' => $vi,
                 'kategori' => $this->tentukanKategori($vi),
                 'data_tidak_lengkap' => $row['data_tidak_lengkap'],

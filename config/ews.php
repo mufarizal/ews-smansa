@@ -3,14 +3,14 @@
 return [
 
     'bobot' => [
-        'c1_akademik' => 0.40,  // 40%
-        'c2_absensi' => 0.35,  // 35%
-        'c3_perilaku' => 0.25,  // 25%
+        'c1_akademik' => 0.25,  // 25%
+        'c2_absensi' => 0.40,  // 40%
+        'c3_perilaku' => 0.35,  // 35%
     ],
 
     'threshold' => [
-        'aman' => 0.70,  // Skor >= 0.70 → Aman
-        'perhatian' => 0.45,  // Skor >= 0.45 → Perhatian, < 0.45 → Binaan
+        'aman' => 0.70,        // Skor >= 0.70 → Aman
+        'perhatian' => 0.50,   // Skor >= 0.50 → Perhatian, < 0.50 → Binaan
     ],
 
     'absensi' => [
