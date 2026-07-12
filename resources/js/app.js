@@ -1,4 +1,5 @@
 import "./bootstrap";
+import "./pwa-install";
 
 import Alpine from "alpinejs";
 

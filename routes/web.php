@@ -37,6 +37,10 @@ Route::get('/', function () {
     return view('auth.login');
 });
 
+Route::get('/install', function () {
+    return view('install');
+})->name('install');
+
 Route::middleware(['auth'])->group(function () {
     Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');

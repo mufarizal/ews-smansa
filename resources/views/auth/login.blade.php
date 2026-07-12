@@ -10,9 +10,11 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="EWS">
-    <link rel="icon" href=" {{ asset('img/logo.png') }}" type="image/png">
+    <link rel="icon" href="{{ asset('img/logo.png') }}" type="image/png">
     <title>Login | EWS</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
 </head>
 
 <body class="min-h-screen bg-lime-50 text-slate-900 antialiased">
@@ -64,9 +66,16 @@
                     <div>
                         <label for="password"
                             class="block text-sm font-semibold text-slate-700">{{ __('Password') }}</label>
-                        <input id="password"
-                            class="mt-2 block w-full rounded-xl border-slate-300 px-3 py-2.5 shadow-sm focus:border-lime-600 focus:ring-lime-600"
-                            type="password" name="password" required autocomplete="current-password">
+                        <div class="relative mt-2">
+                            <input id="password"
+                                class="block w-full rounded-xl border-slate-300 px-3 py-2.5 pr-11 shadow-sm focus:border-lime-600 focus:ring-lime-600"
+                                type="password" name="password" required autocomplete="current-password">
+                            <button type="button" id="togglePassword" tabindex="-1"
+                                class="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 transition hover:text-slate-600"
+                                aria-label="Tampilkan password">
+                                <i class="ti ti-eye text-lg" id="togglePasswordIcon"></i>
+                            </button>
+                        </div>
                         @error('password')
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -80,22 +89,52 @@
                             <span class="text-sm text-slate-600">{{ __('Remember me') }}</span>
                         </label>
 
-                        @if (Route::has('password.request'))
-                            <a class="text-sm font-medium text-red-700 transition hover:text-red-600"
-                                href="{{ route('password.request') }}">
-                                {{ __('Forgot your password?') }}
-                            </a>
-                        @endif
+                        {{-- Link install PWA — kecil, senada dengan style "forgot password" sebelumnya --}}
+                        <a href="{{ route('install') }}"
+                            class="inline-flex items-center gap-1 text-sm font-medium text-lime-700 transition hover:text-lime-600">
+                            <i class="ti ti-device-mobile-down text-base"></i>
+                            Cara Install
+                        </a>
                     </div>
 
                     <button type="submit"
                         class="w-full rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
                         {{ __('Log in') }}
                     </button>
+
+                    {{-- Forgot password dipindah ke bawah tombol login, kecil & center --}}
+                    @if (Route::has('password.request'))
+                        <p class="text-center">
+                            <a class="text-sm font-medium text-red-700 transition hover:text-red-600"
+                                href="{{ route('password.request') }}">
+                                {{ __('Forgot your password?') }}
+                            </a>
+                        </p>
+                    @endif
                 </form>
             </div>
         </section>
     </main>
+
+    <script>
+        (function() {
+            const toggleBtn = document.getElementById('togglePassword');
+            const passwordInput = document.getElementById('password');
+            const icon = document.getElementById('togglePasswordIcon');
+
+            if (!toggleBtn || !passwordInput || !icon) return;
+
+            toggleBtn.addEventListener('click', function() {
+                const isHidden = passwordInput.type === 'password';
+                passwordInput.type = isHidden ? 'text' : 'password';
+
+                icon.classList.toggle('ti-eye', !isHidden);
+                icon.classList.toggle('ti-eye-off', isHidden);
+
+                toggleBtn.setAttribute('aria-label', isHidden ? 'Sembunyikan password' : 'Tampilkan password');
+            });
+        })();
+    </script>
 </body>
 
 </html>
