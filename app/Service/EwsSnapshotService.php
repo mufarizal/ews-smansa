@@ -295,7 +295,7 @@ class EwsSnapshotService
         return EarlyWarningResult::where('siswa_id', $siswaId)
             ->where('semester_id', $semesterId)
             ->whereBetween('tanggal_hitung', [$dari, $sampai])
-            ->orderBy('tanggal_hitung')
+            ->orderByDesc('tanggal_hitung')
             ->get();
     }
 }
